@@ -1,0 +1,28 @@
+{
+  "name": "backend-media-player",
+  "version": "1.0.0",
+  "description": "",
+  "main": "App.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dihnhuunam/Backend-Media-Player.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dihnhuunam/Backend-Media-Player/issues"
+  },
+  "homepage": "https://github.com/dihnhuunam/Backend-Media-Player#readme",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.14.0"
+  }
+}
