@@ -26,24 +26,23 @@ curl -X POST http://localhost:3000/api/auth/register \
 }
 ```
 
-### Test Case 2: Register user with invalid dateOfBirth (nam@gmail.com)
+### Test Case 2: Register user with valid data (nam@gmail.com)
 ```bash
 curl -X POST http://localhost:3000/api/auth/register \
 -H "Content-Type: application/json" \
 -d '{
   "email": "nam@gmail.com",
   "password": "123",
-  "name": "Demo",
-  "dateOfBirth": "20003-01-01"
+  "name": "Nam",
+  "dateOfBirth": "2003-07-21"
 }'
 ```
 **Expected Response** (if dateOfBirth is invalid, depends on MySQL validation):
 ```json
 {
-  "message": "Internal server error"
+  "message": "User registered successfully"
 }
 ```
-**Note**: Consider adding validation for `dateOfBirth` to handle invalid formats.
 
 ### Test Case 3: Register user with valid data (test@gmail.com)
 ```bash
@@ -52,8 +51,8 @@ curl -X POST http://localhost:3000/api/auth/register \
 -d '{
   "email": "test@gmail.com",
   "password": "123",
-  "name": "Demo",
-  "dateOfBirth": "2003-01-01"
+  "name": "Test",
+  "dateOfBirth": "2001-10-12"
 }'
 ```
 **Expected Response**:
