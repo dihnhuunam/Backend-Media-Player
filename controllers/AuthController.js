@@ -55,9 +55,11 @@ export async function login(req, res) {
     }
 
     // Generate JWT
-    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
-      expiresIn: "30d",
-    });
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      JWT_SECRET,
+      { expiresIn: "1h" }
+    );
 
     // Return user info and token
     res.status(200).json({
@@ -67,6 +69,7 @@ export async function login(req, res) {
         email: user.email,
         name: user.name,
         dateOfBirth: user.date_of_birth,
+        role: user.role,
       },
     });
   } catch (error) {
@@ -82,6 +85,22 @@ export async function getUsers(req, res) {
     res.status(200).json(users);
   } catch (error) {
     console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+// Get user by ID
+export async function getUserById(req, res) {
+  const { id } = req.params;
+
+  try {
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error fetching user:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }

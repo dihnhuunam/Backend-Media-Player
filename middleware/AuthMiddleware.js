@@ -17,7 +17,7 @@ export function authMiddleware(req, res, next) {
   try {
     // Xác minh token
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded; // Lưu thông tin user (id, email) vào request để sử dụng sau
+    req.user = decoded; // Lưu thông tin user (id, email, role) vào request để sử dụng sau
     next(); // Chuyển tiếp đến handler
   } catch (error) {
     console.error("Error verifying token:", error);
