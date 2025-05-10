@@ -5,6 +5,8 @@
     "name": "admin",
     "dateOfBirth": "2000-01-02"
 }
+USE media_player;
+UPDATE users SET role = 'admin' WHERE email = 'admin@gmail.com';
 
 {
     "email": "test1@gmail.com",

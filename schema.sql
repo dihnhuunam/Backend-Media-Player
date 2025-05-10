@@ -12,6 +12,12 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Genres table
+CREATE TABLE IF NOT EXISTS genres (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE
+);
+
 -- Songs table (admin-uploaded songs)
 CREATE TABLE IF NOT EXISTS songs (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -19,6 +25,15 @@ CREATE TABLE IF NOT EXISTS songs (
     artist VARCHAR(100) NOT NULL,
     file_path VARCHAR(255) NOT NULL,
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Song_genres table (many-to-many relationship between songs and genres)
+CREATE TABLE IF NOT EXISTS song_genres (
+    song_id INT NOT NULL,
+    genre_id INT NOT NULL,
+    PRIMARY KEY (song_id, genre_id),
+    FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE,
+    FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE CASCADE
 );
 
 -- Playlists table (user-created playlists)
@@ -44,3 +59,4 @@ CREATE INDEX idx_email ON users(email);
 CREATE INDEX idx_user_id ON playlists(user_id);
 CREATE INDEX idx_title ON songs(title);
 CREATE INDEX idx_artist ON songs(artist);
+CREATE INDEX idx_genre_name ON genres(name);

@@ -4,6 +4,7 @@ import {
   getSongs,
   streamSong,
   searchSongs,
+  searchSongsByGenres,
 } from "../controllers/SongController.js";
 import { authMiddleware } from "../middleware/AuthMiddleware.js";
 import { adminMiddleware } from "../middleware/AdminMiddleware.js";
@@ -45,5 +46,6 @@ router.post(
 router.get("/", getSongs);
 router.get("/stream/:id", streamSong);
 router.get("/search", searchSongs);
+router.get("/search-by-genres", searchSongsByGenres);
 
 export default router;

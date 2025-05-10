@@ -4,7 +4,7 @@ import path from "path";
 
 // Add a new song (admin only)
 export async function addSong(req, res) {
-  const { title, artist } = req.body;
+  const { title, artist, genres } = req.body;
   const file = req.file;
 
   if (!title || !artist || !file) {
@@ -24,7 +24,27 @@ export async function addSong(req, res) {
 
   try {
     const filePath = `/uploads/${file.filename}`;
-    const songId = await Song.create(title, artist, filePath);
+    // Xử lý genres
+    let genresArray = [];
+    if (genres) {
+      if (typeof genres === "string") {
+        try {
+          // Thử parse nếu là JSON
+          genresArray = JSON.parse(genres);
+          if (!Array.isArray(genresArray)) {
+            // Nếu không phải mảng, chuyển thành mảng
+            genresArray = [genres];
+          }
+        } catch (e) {
+          // Nếu không phải JSON, coi như chuỗi đơn và chuyển thành mảng
+          genresArray = [genres];
+        }
+      } else if (Array.isArray(genres)) {
+        genresArray = genres;
+      }
+    }
+
+    const songId = await Song.create(title, artist, filePath, genresArray);
     res.status(201).json({ message: "Song added successfully", songId });
   } catch (error) {
     console.error("Error adding song:", error);
@@ -124,6 +144,23 @@ export async function searchSongs(req, res) {
     res.status(200).json(songs);
   } catch (error) {
     console.error("Error searching songs:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+// Search songs by genres
+export async function searchSongsByGenres(req, res) {
+  const { genres } = req.query;
+
+  if (!genres) {
+    return res.status(400).json({ message: "Genres query is required" });
+  }
+
+  try {
+    const songs = await Song.searchByGenres(genres);
+    res.status(200).json(songs);
+  } catch (error) {
+    console.error("Error searching songs by genres:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }
