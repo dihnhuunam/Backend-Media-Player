@@ -1,0 +1,65 @@
+# Register
+{
+    "email": "admin@gmail.com",
+    "password":"1234",
+    "name": "admin",
+    "dateOfBirth": "2000-01-02"
+}
+
+{
+    "email": "test1@gmail.com",
+    "password":"1234",
+    "name": "test1",
+    "dateOfBirth": "2000-01-03"
+}
+
+{
+    "email": "test2@gmail.com",
+    "password":"1234",
+    "name": "test2",
+    "dateOfBirth": "2000-05-03"
+}
+
+{
+    "email": "test3@gmail.com",
+    "password":"1234",
+    "name": "test4",
+    "dateOfBirth": "2000-09-12"
+}
+
+=====================================
+
+# Login
+{
+    "email": "admin@gmail.com",
+    "password":"1234"
+}
+
+{
+    "email": "test1@gmail.com",
+    "password":"1234"
+}
+
+{
+    "email": "test2@gmail.com",
+    "password":"1234"
+}
+
+{
+    "email": "test3@gmail.com",
+    "password":"1234"
+}
+
+=====================================
+
+# Songs
+Header -> Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NDY1ODcyOTcsImV4cCI6MTc0NjU5MDg5N30.w5PI1_zR1Hl2XxyXNqw-qMBFvO8Kz0ONKg9s57BbFC8
+
+=====================================
+
+# Playlist
+JWT test1: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJ0ZXN0MUBnbWFpbC5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc0NjU4ODM0NSwiZXhwIjoxNzQ2NTkxOTQ1fQ.tYCoZKhARyfLQyje0lBx8Tz78z0W7UhH-amiKQoznGI
+{
+    "name": "Test 1 Playlist"
+}
+
