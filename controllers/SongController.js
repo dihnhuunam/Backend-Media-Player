@@ -4,13 +4,11 @@ import path from "path";
 
 // Add a new song (admin only)
 export async function addSong(req, res) {
-  const { title, artist, genres } = req.body;
+  const { title, genres, artists } = req.body;
   const file = req.file;
 
-  if (!title || !artist || !file) {
-    return res
-      .status(400)
-      .json({ message: "Title, artist, and file are required" });
+  if (!title || !file) {
+    return res.status(400).json({ message: "Title and file are required" });
   }
 
   // Kiểm tra định dạng file
@@ -29,14 +27,11 @@ export async function addSong(req, res) {
     if (genres) {
       if (typeof genres === "string") {
         try {
-          // Thử parse nếu là JSON
           genresArray = JSON.parse(genres);
           if (!Array.isArray(genresArray)) {
-            // Nếu không phải mảng, chuyển thành mảng
             genresArray = [genres];
           }
         } catch (e) {
-          // Nếu không phải JSON, coi như chuỗi đơn và chuyển thành mảng
           genresArray = [genres];
         }
       } else if (Array.isArray(genres)) {
@@ -44,7 +39,29 @@ export async function addSong(req, res) {
       }
     }
 
-    const songId = await Song.create(title, artist, filePath, genresArray);
+    // Xử lý artists
+    let artistsArray = [];
+    if (artists) {
+      if (typeof artists === "string") {
+        try {
+          artistsArray = JSON.parse(artists);
+          if (!Array.isArray(artistsArray)) {
+            artistsArray = [artists];
+          }
+        } catch (e) {
+          artistsArray = [artists];
+        }
+      } else if (Array.isArray(artists)) {
+        artistsArray = artists;
+      }
+    }
+
+    const songId = await Song.create(
+      title,
+      filePath,
+      genresArray,
+      artistsArray
+    );
     res.status(201).json({ message: "Song added successfully", songId });
   } catch (error) {
     console.error("Error adding song:", error);

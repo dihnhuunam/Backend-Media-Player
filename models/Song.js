@@ -1,21 +1,22 @@
 import pool from "../configs/Database.js";
 
 export class Song {
-  static async create(title, artist, filePath, genres) {
+  static async create(title, filePath, genres, artists) {
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
 
       // Insert song
       const [result] = await connection.query(
-        "INSERT INTO songs (title, artist, file_path) VALUES (?, ?, ?)",
-        [title, artist, filePath]
+        "INSERT INTO songs (title, file_path) VALUES (?, ?)",
+        [title, filePath]
       );
       const songId = result.insertId;
 
       // Insert genres if provided
       if (genres && genres.length > 0) {
-        for (const genreName of genres) {
+        const uniqueGenres = [...new Set(genres)]; // Loại bỏ trùng lặp genres
+        for (const genreName of uniqueGenres) {
           // Insert or get genre ID
           let [genreResult] = await connection.query(
             "INSERT INTO genres (name) VALUES (?) ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)",
@@ -29,10 +30,35 @@ export class Song {
               ])
             )[0][0].id;
 
-          // Link song to genre
+          // Link song to genre (tránh trùng lặp)
           await connection.query(
-            "INSERT INTO song_genres (song_id, genre_id) VALUES (?, ?)",
+            "INSERT IGNORE INTO song_genres (song_id, genre_id) VALUES (?, ?)",
             [songId, genreId]
+          );
+        }
+      }
+
+      // Insert artists if provided
+      if (artists && artists.length > 0) {
+        const uniqueArtists = [...new Set(artists)]; // Loại bỏ trùng lặp artists
+        for (const artistName of uniqueArtists) {
+          // Insert or get artist ID
+          let [artistResult] = await connection.query(
+            "INSERT INTO artists (name) VALUES (?) ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)",
+            [artistName]
+          );
+          const artistId =
+            artistResult.insertId ||
+            (
+              await connection.query("SELECT id FROM artists WHERE name = ?", [
+                artistName,
+              ])
+            )[0][0].id;
+
+          // Link song to artist (tránh trùng lặp)
+          await connection.query(
+            "INSERT IGNORE INTO song_artists (song_id, artist_id) VALUES (?, ?)",
+            [songId, artistId]
           );
         }
       }
@@ -49,27 +75,34 @@ export class Song {
 
   static async findAll() {
     const [rows] = await pool.query(`
-      SELECT s.id, s.title, s.artist, s.file_path, s.uploaded_at,
-             GROUP_CONCAT(g.name) AS genres
+      SELECT s.id, s.title, s.file_path, s.uploaded_at,
+             GROUP_CONCAT(DISTINCT g.name) AS genres,
+             GROUP_CONCAT(DISTINCT a.name) AS artists
       FROM songs s
       LEFT JOIN song_genres sg ON s.id = sg.song_id
       LEFT JOIN genres g ON sg.genre_id = g.id
+      LEFT JOIN song_artists sa ON s.id = sa.song_id
+      LEFT JOIN artists a ON sa.artist_id = a.id
       GROUP BY s.id
     `);
     return rows.map((row) => ({
       ...row,
-      genres: row.genres ? row.genres.split(",") : [],
+      genres: row.genres ? [...new Set(row.genres.split(","))] : [],
+      artists: row.artists ? [...new Set(row.artists.split(","))] : [],
     }));
   }
 
   static async findById(id) {
     const [rows] = await pool.query(
       `
-      SELECT s.id, s.title, s.artist, s.file_path, s.uploaded_at,
-             GROUP_CONCAT(g.name) AS genres
+      SELECT s.id, s.title, s.file_path, s.uploaded_at,
+             GROUP_CONCAT(DISTINCT g.name) AS genres,
+             GROUP_CONCAT(DISTINCT a.name) AS artists
       FROM songs s
       LEFT JOIN song_genres sg ON s.id = sg.song_id
       LEFT JOIN genres g ON sg.genre_id = g.id
+      LEFT JOIN song_artists sa ON s.id = sa.song_id
+      LEFT JOIN artists a ON sa.artist_id = a.id
       WHERE s.id = ?
       GROUP BY s.id
     `,
@@ -78,7 +111,8 @@ export class Song {
     if (rows.length === 0) return null;
     return {
       ...rows[0],
-      genres: rows[0].genres ? rows[0].genres.split(",") : [],
+      genres: rows[0].genres ? [...new Set(rows[0].genres.split(","))] : [],
+      artists: rows[0].artists ? [...new Set(rows[0].artists.split(","))] : [],
     };
   }
 
@@ -86,19 +120,23 @@ export class Song {
     const searchTerm = `%${query}%`;
     const [rows] = await pool.query(
       `
-      SELECT s.id, s.title, s.artist, s.file_path, s.uploaded_at,
-             GROUP_CONCAT(g.name) AS genres
+      SELECT s.id, s.title, s.file_path, s.uploaded_at,
+             GROUP_CONCAT(DISTINCT g.name) AS genres,
+             GROUP_CONCAT(DISTINCT a.name) AS artists
       FROM songs s
       LEFT JOIN song_genres sg ON s.id = sg.song_id
       LEFT JOIN genres g ON sg.genre_id = g.id
-      WHERE s.title LIKE ? OR s.artist LIKE ?
+      LEFT JOIN song_artists sa ON s.id = sa.song_id
+      LEFT JOIN artists a ON sa.artist_id = a.id
+      WHERE s.title LIKE ? OR a.name LIKE ?
       GROUP BY s.id
     `,
       [searchTerm, searchTerm]
     );
     return rows.map((row) => ({
       ...row,
-      genres: row.genres ? row.genres.split(",") : [],
+      genres: row.genres ? [...new Set(row.genres.split(","))] : [],
+      artists: row.artists ? [...new Set(row.artists.split(","))] : [],
     }));
   }
 
@@ -109,13 +147,16 @@ export class Song {
     const placeholders = genreArray.map(() => "?").join(",");
     const [rows] = await pool.query(
       `
-      SELECT s.id, s.title, s.artist, s.file_path, s.uploaded_at,
-             GROUP_CONCAT(g2.name) AS genres
+      SELECT s.id, s.title, s.file_path, s.uploaded_at,
+             GROUP_CONCAT(DISTINCT g2.name) AS genres,
+             GROUP_CONCAT(DISTINCT a.name) AS artists
       FROM songs s
       JOIN song_genres sg ON s.id = sg.song_id
       JOIN genres g ON sg.genre_id = g.id
       LEFT JOIN song_genres sg2 ON s.id = sg2.song_id
       LEFT JOIN genres g2 ON sg2.genre_id = g2.id
+      LEFT JOIN song_artists sa ON s.id = sa.song_id
+      LEFT JOIN artists a ON sa.artist_id = a.id
       WHERE g.name IN (${placeholders})
       GROUP BY s.id
     `,
@@ -123,7 +164,8 @@ export class Song {
     );
     return rows.map((row) => ({
       ...row,
-      genres: row.genres ? row.genres.split(",") : [],
+      genres: row.genres ? [...new Set(row.genres.split(","))] : [],
+      artists: row.artists ? [...new Set(row.artists.split(","))] : [],
     }));
   }
 }

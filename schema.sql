@@ -18,11 +18,16 @@ CREATE TABLE IF NOT EXISTS genres (
     name VARCHAR(100) NOT NULL UNIQUE
 );
 
+-- Artists table
+CREATE TABLE IF NOT EXISTS artists (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE
+);
+
 -- Songs table (admin-uploaded songs)
 CREATE TABLE IF NOT EXISTS songs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
-    artist VARCHAR(100) NOT NULL,
     file_path VARCHAR(255) NOT NULL,
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -34,6 +39,15 @@ CREATE TABLE IF NOT EXISTS song_genres (
     PRIMARY KEY (song_id, genre_id),
     FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE,
     FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE CASCADE
+);
+
+-- Song_artists table (many-to-many relationship between songs and artists)
+CREATE TABLE IF NOT EXISTS song_artists (
+    song_id INT NOT NULL,
+    artist_id INT NOT NULL,
+    PRIMARY KEY (song_id, artist_id),
+    FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE,
+    FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE
 );
 
 -- Playlists table (user-created playlists)
@@ -58,5 +72,5 @@ CREATE TABLE IF NOT EXISTS playlist_songs (
 CREATE INDEX idx_email ON users(email);
 CREATE INDEX idx_user_id ON playlists(user_id);
 CREATE INDEX idx_title ON songs(title);
-CREATE INDEX idx_artist ON songs(artist);
 CREATE INDEX idx_genre_name ON genres(name);
+CREATE INDEX idx_artist_name ON artists(name);

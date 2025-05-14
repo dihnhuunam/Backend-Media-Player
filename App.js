@@ -1,8 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
-import authRoutes from "./routes/Auth.js";
-import songRoutes from "./routes/Song.js";
-import playlistRoutes from "./routes/Playlist.js";
+import authRoutes from "./routes/AuthRoute.js";
+import songRoutes from "./routes/SongRoute.js";
+import playlistRoutes from "./routes/PlaylistRoute.js";
 import fs from "fs";
 import path from "path";
 
