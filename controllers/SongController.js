@@ -1,6 +1,7 @@
 import { Song } from "../models/Song.js";
 import fs from "fs";
 import path from "path";
+import pool from "../configs/Database.js";
 
 // Add a new song (admin only)
 export async function addSong(req, res) {
@@ -22,6 +23,7 @@ export async function addSong(req, res) {
 
   try {
     const filePath = `/uploads/${file.filename}`;
+    console.log("Saving file with path:", filePath); // Debug log
     // Xử lý genres
     let genresArray = [];
     if (genres) {
@@ -62,9 +64,18 @@ export async function addSong(req, res) {
       genresArray,
       artistsArray
     );
+    console.log("Song created with ID:", songId); // Debug log
     res.status(201).json({ message: "Song added successfully", songId });
   } catch (error) {
     console.error("Error adding song:", error);
+    // Xóa file nếu lỗi
+    if (file) {
+      const deletePath = path.join(process.cwd(), `/uploads/${file.filename}`);
+      console.log("Deleting file due to error:", deletePath); // Debug log
+      fs.unlink(deletePath, (err) => {
+        if (err) console.error("Error deleting file:", err);
+      });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -91,7 +102,9 @@ export async function streamSong(req, res) {
     }
 
     const filePath = path.join(process.cwd(), song.file_path);
+    console.log("Attempting to stream file at:", filePath); // Debug log
     if (!fs.existsSync(filePath)) {
+      console.log("File does not exist at:", filePath); // Debug log
       return res.status(404).json({ message: "File not found" });
     }
 
@@ -178,6 +191,162 @@ export async function searchSongsByGenres(req, res) {
     res.status(200).json(songs);
   } catch (error) {
     console.error("Error searching songs by genres:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+// Update song information (admin only)
+export async function updateSong(req, res) {
+  const { id } = req.params;
+  const { title, genres, artists } = req.body;
+
+  if (!title && !genres && !artists) {
+    return res
+      .status(400)
+      .json({
+        message: "At least one field (title, genres, or artists) is required",
+      });
+  }
+
+  try {
+    const song = await Song.findById(id);
+    if (!song) {
+      return res.status(404).json({ message: "Song not found" });
+    }
+
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      // Update title if provided
+      if (title) {
+        await connection.query("UPDATE songs SET title = ? WHERE id = ?", [
+          title,
+          id,
+        ]);
+      }
+
+      // Update genres if provided
+      if (genres) {
+        let genresArray = [];
+        if (typeof genres === "string") {
+          try {
+            genresArray = JSON.parse(genres);
+            if (!Array.isArray(genresArray)) genresArray = [genres];
+          } catch (e) {
+            genresArray = [genres];
+          }
+        } else if (Array.isArray(genres)) {
+          genresArray = genres;
+        }
+
+        // Delete existing genres
+        await connection.query("DELETE FROM song_genres WHERE song_id = ?", [
+          id,
+        ]);
+
+        // Insert new genres
+        const uniqueGenres = [...new Set(genresArray)];
+        for (const genreName of uniqueGenres) {
+          let [genreResult] = await connection.query(
+            "INSERT INTO genres (name) VALUES (?) ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)",
+            [genreName]
+          );
+          const genreId =
+            genreResult.insertId ||
+            (
+              await connection.query("SELECT id FROM genres WHERE name = ?", [
+                genreName,
+              ])
+            )[0][0].id;
+
+          await connection.query(
+            "INSERT INTO song_genres (song_id, genre_id) VALUES (?, ?)",
+            [id, genreId]
+          );
+        }
+      }
+
+      // Update artists if provided
+      if (artists) {
+        let artistsArray = [];
+        if (typeof artists === "string") {
+          try {
+            artistsArray = JSON.parse(artists);
+            if (!Array.isArray(artistsArray)) artistsArray = [artists];
+          } catch (e) {
+            artistsArray = [artists];
+          }
+        } else if (Array.isArray(artists)) {
+          artistsArray = artists;
+        }
+
+        // Delete existing artists
+        await connection.query("DELETE FROM song_artists WHERE song_id = ?", [
+          id,
+        ]);
+
+        // Insert new artists
+        const uniqueArtists = [...new Set(artistsArray)];
+        for (const artistName of uniqueArtists) {
+          let [artistResult] = await connection.query(
+            "INSERT INTO artists (name) VALUES (?) ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)",
+            [artistName]
+          );
+          const artistId =
+            artistResult.insertId ||
+            (
+              await connection.query("SELECT id FROM artists WHERE name = ?", [
+                artistName,
+              ])
+            )[0][0].id;
+
+          await connection.query(
+            "INSERT INTO song_artists (song_id, artist_id) VALUES (?, ?)",
+            [id, artistId]
+          );
+        }
+      }
+
+      await connection.commit();
+      res.status(200).json({ message: "Song updated successfully" });
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error("Error updating song:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+// Delete a song (admin only)
+export async function deleteSong(req, res) {
+  const { id } = req.params;
+
+  try {
+    const song = await Song.findById(id);
+    if (!song) {
+      return res.status(404).json({ message: "Song not found" });
+    }
+
+    // Delete song (cascades to song_genres, song_artists, playlist_songs)
+    await pool.query("DELETE FROM songs WHERE id = ?", [id]);
+
+    // Delete physical file
+    const filePath = path.join(process.cwd(), song.file_path);
+    if (fs.existsSync(filePath)) {
+      console.log("Deleting file:", filePath); // Debug log
+      fs.unlink(filePath, (err) => {
+        if (err) console.error("Error deleting file:", err);
+      });
+    }
+
+    res.status(200).json({ message: "Song deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting song:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }

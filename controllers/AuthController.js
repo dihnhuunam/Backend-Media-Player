@@ -9,11 +9,9 @@ export async function register(req, res) {
   const { email, password, name, dateOfBirth } = req.body;
 
   if (!email || !password || !name || !dateOfBirth) {
-    return res
-      .status(400)
-      .json({
-        message: "Email, password, name, and date of birth are required",
-      });
+    return res.status(400).json({
+      message: "Email, password, name, and date of birth are required",
+    });
   }
 
   try {
@@ -58,7 +56,7 @@ export async function login(req, res) {
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "7d" }
     );
 
     // Return user info and token

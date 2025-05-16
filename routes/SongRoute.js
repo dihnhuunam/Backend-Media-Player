@@ -5,6 +5,8 @@ import {
   streamSong,
   searchSongs,
   searchSongsByGenres,
+  updateSong,
+  deleteSong,
 } from "../controllers/SongController.js";
 import { authMiddleware } from "../middleware/AuthMiddleware.js";
 import { adminMiddleware } from "../middleware/AdminMiddleware.js";
@@ -14,7 +16,7 @@ import path from "path";
 // Cấu hình multer để lưu file nhạc
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
+    cb(null, "uploads/"); // Sửa từ "Uploads/" thành "uploads/"
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
@@ -47,5 +49,7 @@ router.get("/", getSongs);
 router.get("/stream/:id", streamSong);
 router.get("/search", searchSongs);
 router.get("/search-by-genres", searchSongsByGenres);
+router.put("/:id", authMiddleware, adminMiddleware, updateSong);
+router.delete("/:id", authMiddleware, adminMiddleware, deleteSong);
 
 export default router;
