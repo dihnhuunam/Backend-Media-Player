@@ -5,7 +5,7 @@ import pool from "../configs/Database.js";
 // Create a new playlist
 export async function createPlaylist(req, res) {
   const { name } = req.body;
-  const userId = req.user.id; // From authMiddleware
+  const userId = req.user.id; 
 
   if (!name) {
     return res.status(400).json({ message: "Playlist name is required" });
@@ -24,7 +24,7 @@ export async function createPlaylist(req, res) {
 
 // Get all playlists of the logged-in user
 export async function getUserPlaylists(req, res) {
-  const userId = req.user.id; // From authMiddleware
+  const userId = req.user.id; 
 
   try {
     const playlists = await Playlist.findByUserId(userId);
@@ -38,7 +38,7 @@ export async function getUserPlaylists(req, res) {
 // Add a song to a playlist
 export async function addSongToPlaylist(req, res) {
   const { playlistId, songId } = req.body;
-  const userId = req.user.id; // From authMiddleware
+  const userId = req.user.id; 
 
   if (!playlistId || !songId) {
     return res
@@ -66,7 +66,7 @@ export async function addSongToPlaylist(req, res) {
 // Get all songs in a playlist
 export async function getPlaylistSongs(req, res) {
   const { playlistId } = req.params;
-  const userId = req.user.id; // From authMiddleware
+  const userId = req.user.id; 
 
   try {
     // Check if playlist belongs to user
@@ -88,7 +88,7 @@ export async function getPlaylistSongs(req, res) {
 // Remove a song from a playlist
 export async function removeSongFromPlaylist(req, res) {
   const { playlistId, songId } = req.body;
-  const userId = req.user.id; // From authMiddleware
+  const userId = req.user.id; 
 
   if (!playlistId || !songId) {
     return res

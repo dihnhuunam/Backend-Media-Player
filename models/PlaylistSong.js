@@ -1,7 +1,7 @@
 import pool from "../configs/Database.js";
 
 export class PlaylistSong {
-  // Thêm bài hát vào danh sách phát
+  // Add to playlist
   static async addSongToPlaylist(playlistId, songId) {
     try {
       const [result] = await pool.query(
@@ -15,7 +15,7 @@ export class PlaylistSong {
     }
   }
 
-  // Xóa bài hát khỏi danh sách phát
+  // Remove from playlist
   static async removeSongFromPlaylist(playlistId, songId) {
     try {
       const [result] = await pool.query(
@@ -29,7 +29,7 @@ export class PlaylistSong {
     }
   }
 
-  // Lấy danh sách bài hát trong danh sách phát
+  // Get all songs in playlist
   static async findSongsByPlaylistId(playlistId) {
     try {
       const [rows] = await pool.query(

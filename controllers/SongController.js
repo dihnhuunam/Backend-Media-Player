@@ -12,7 +12,7 @@ export async function addSong(req, res) {
     return res.status(400).json({ message: "Title and file are required" });
   }
 
-  // Kiểm tra định dạng file
+  // Check file's format
   const allowedExtensions = [".mp3", ".wav", ".m4a"];
   const fileExtension = path.extname(file.originalname).toLowerCase();
   if (!allowedExtensions.includes(fileExtension)) {
@@ -23,8 +23,8 @@ export async function addSong(req, res) {
 
   try {
     const filePath = `/uploads/${file.filename}`;
-    console.log("Saving file with path:", filePath); // Debug log
-    // Xử lý genres
+    console.log("Saving file with path:", filePath); 
+    // Handle genres
     let genresArray = [];
     if (genres) {
       if (typeof genres === "string") {
@@ -41,7 +41,7 @@ export async function addSong(req, res) {
       }
     }
 
-    // Xử lý artists
+    // Handle artists
     let artistsArray = [];
     if (artists) {
       if (typeof artists === "string") {
@@ -64,14 +64,14 @@ export async function addSong(req, res) {
       genresArray,
       artistsArray
     );
-    console.log("Song created with ID:", songId); // Debug log
+    console.log("Song created with ID:", songId); 
     res.status(201).json({ message: "Song added successfully", songId });
   } catch (error) {
     console.error("Error adding song:", error);
-    // Xóa file nếu lỗi
+    // Delete error file
     if (file) {
       const deletePath = path.join(process.cwd(), `/uploads/${file.filename}`);
-      console.log("Deleting file due to error:", deletePath); // Debug log
+      console.log("Deleting file due to error:", deletePath); 
       fs.unlink(deletePath, (err) => {
         if (err) console.error("Error deleting file:", err);
       });
@@ -102,9 +102,9 @@ export async function streamSong(req, res) {
     }
 
     const filePath = path.join(process.cwd(), song.file_path);
-    console.log("Attempting to stream file at:", filePath); // Debug log
+    console.log("Attempting to stream file at:", filePath); 
     if (!fs.existsSync(filePath)) {
-      console.log("File does not exist at:", filePath); // Debug log
+      console.log("File does not exist at:", filePath); 
       return res.status(404).json({ message: "File not found" });
     }
 
@@ -112,7 +112,7 @@ export async function streamSong(req, res) {
     const fileSize = stat.size;
     const range = req.headers.range;
 
-    // Thiết lập MIME type dựa trên đuôi file
+    // Setup MIME type 
     const mimeType =
       {
         ".mp3": "audio/mpeg",
@@ -121,12 +121,12 @@ export async function streamSong(req, res) {
       }[path.extname(filePath).toLowerCase()] || "audio/mpeg";
 
     if (range) {
-      // Xử lý Range request
+      // Handle Range request
       const parts = range.replace(/bytes=/, "").split("-");
       const start = parseInt(parts[0], 10);
       const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
 
-      // Kiểm tra range hợp lệ
+      // Check Range
       if (start >= fileSize || end >= fileSize || start > end) {
         return res
           .status(416)
@@ -145,7 +145,7 @@ export async function streamSong(req, res) {
       res.writeHead(206, head);
       file.pipe(res);
     } else {
-      // Trả về toàn bộ file nếu không có Range header
+      // Return total file if Range header does not exist
       const head = {
         "Content-Length": fileSize,
         "Content-Type": mimeType,
@@ -338,7 +338,7 @@ export async function deleteSong(req, res) {
     // Delete physical file
     const filePath = path.join(process.cwd(), song.file_path);
     if (fs.existsSync(filePath)) {
-      console.log("Deleting file:", filePath); // Debug log
+      console.log("Deleting file:", filePath); 
       fs.unlink(filePath, (err) => {
         if (err) console.error("Error deleting file:", err);
       });

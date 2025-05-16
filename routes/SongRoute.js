@@ -13,10 +13,10 @@ import { adminMiddleware } from "../middleware/AdminMiddleware.js";
 import multer from "multer";
 import path from "path";
 
-// Cấu hình multer để lưu file nhạc
+// Storage media files
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/"); // Sửa từ "Uploads/" thành "uploads/"
+    cb(null, "uploads/"); 
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);

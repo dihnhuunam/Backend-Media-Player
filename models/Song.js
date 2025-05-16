@@ -5,7 +5,7 @@ export class Song {
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
-
+      e;
       // Insert song
       const [result] = await connection.query(
         "INSERT INTO songs (title, file_path) VALUES (?, ?)",
@@ -15,7 +15,7 @@ export class Song {
 
       // Insert genres if provided
       if (genres && genres.length > 0) {
-        const uniqueGenres = [...new Set(genres)]; // Loại bỏ trùng lặp genres
+        const uniqueGenres = [...new Set(genres)];
         for (const genreName of uniqueGenres) {
           // Insert or get genre ID
           let [genreResult] = await connection.query(
@@ -30,7 +30,7 @@ export class Song {
               ])
             )[0][0].id;
 
-          // Link song to genre (tránh trùng lặp)
+          // Link song to genre
           await connection.query(
             "INSERT IGNORE INTO song_genres (song_id, genre_id) VALUES (?, ?)",
             [songId, genreId]
@@ -40,7 +40,7 @@ export class Song {
 
       // Insert artists if provided
       if (artists && artists.length > 0) {
-        const uniqueArtists = [...new Set(artists)]; // Loại bỏ trùng lặp artists
+        const uniqueArtists = [...new Set(artists)];
         for (const artistName of uniqueArtists) {
           // Insert or get artist ID
           let [artistResult] = await connection.query(
@@ -55,7 +55,7 @@ export class Song {
               ])
             )[0][0].id;
 
-          // Link song to artist (tránh trùng lặp)
+          // Link song to artist
           await connection.query(
             "INSERT IGNORE INTO song_artists (song_id, artist_id) VALUES (?, ?)",
             [songId, artistId]

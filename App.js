@@ -10,7 +10,7 @@ dotenv.config();
 
 const app = express();
 
-// Tạo thư mục uploads nếu chưa tồn tại
+// Create folder 'uploads/' if not existed
 const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
