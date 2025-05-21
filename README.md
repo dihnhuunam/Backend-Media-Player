@@ -575,7 +575,29 @@ Below are the main API endpoints:
       }
       ```
 
-15. **Default admin account**:
+15. **Delete a playlist** (User/Admin):
+
+    - Use the `/api/playlists/:playlistId` endpoint.
+    - **Request** (Postman or cURL):
+      - **Method**: DELETE
+      - **URL**: `http://localhost:3000/api/playlists/1`
+      - **Header**:
+        ```
+        Authorization: Bearer <token>
+        ```
+      - **cURL Example**:
+        ```bash
+        curl -X DELETE http://localhost:3000/api/playlists/1 \
+        -H "Authorization: Bearer <token>"
+        ```
+    - **Expected Response** (HTTP 200):
+      ```json
+      {
+        "message": "Playlist deleted successfully"
+      }
+      ```
+
+16. **Default admin account**:
     - Log in with:
       ```json
       {
