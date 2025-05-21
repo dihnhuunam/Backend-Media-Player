@@ -55,7 +55,7 @@ export async function addSongToPlaylist(req, res) {
         .json({ message: "Unauthorized: Playlist does not belong to user" });
     }
 
-    await PlaylistSong.addSong(playlistId, songId);
+    await PlaylistSong.addSongToPlaylist(playlistId, songId);
     res.status(200).json({ message: "Song added to playlist successfully" });
   } catch (error) {
     console.error("Error adding song to playlist:", error);
