@@ -5,6 +5,7 @@ import {
   addSongToPlaylist,
   getPlaylistSongs,
   removeSongFromPlaylist,
+  deletePlaylist,
 } from "../controllers/PlaylistController.js";
 import { authMiddleware } from "../middleware/AuthMiddleware.js";
 
@@ -15,5 +16,6 @@ router.get("/", authMiddleware, getUserPlaylists);
 router.post("/songs", authMiddleware, addSongToPlaylist);
 router.get("/:playlistId/songs", authMiddleware, getPlaylistSongs);
 router.delete("/songs", authMiddleware, removeSongFromPlaylist);
+router.delete("/:playlistId", authMiddleware, deletePlaylist);
 
 export default router;
