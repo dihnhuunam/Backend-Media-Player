@@ -102,3 +102,61 @@ export async function getUserById(req, res) {
     res.status(500).json({ message: "Internal server error" });
   }
 }
+
+// Update user
+export async function updateUser(req, res) {
+  const { id } = req.params;
+  const { name, dateOfBirth, password } = req.body;
+
+  // Check if at least one field is provided
+  if (!name && !dateOfBirth && !password) {
+    return res
+      .status(400)
+      .json({
+        message:
+          "At least one field (name, dateOfBirth, password) must be provided",
+      });
+  }
+
+  // Check if user is authorized (own account or admin)
+  if (req.user.id !== parseInt(id) && req.user.role !== "admin") {
+    return res
+      .status(403)
+      .json({
+        message:
+          "Unauthorized: You can only update your own account or must be an admin",
+      });
+  }
+
+  try {
+    // Find user
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Prepare update fields
+    const updates = {};
+    if (name) updates.name = name;
+    if (dateOfBirth) updates.date_of_birth = dateOfBirth;
+    if (password) updates.password = await bcrypt.hash(password, 10);
+
+    // Update user in database
+    await User.update(id, updates);
+
+    // Fetch updated user
+    const updatedUser = await User.findById(id);
+    res.status(200).json({
+      message: "User updated successfully",
+      user: {
+        email: updatedUser.email,
+        name: updatedUser.name,
+        dateOfBirth: updatedUser.date_of_birth,
+        role: updatedUser.role,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}

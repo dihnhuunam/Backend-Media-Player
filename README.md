@@ -9,6 +9,9 @@ Backend Media Player is an API server built with **Node.js** and **Express**, de
 3. [Configuration](#configuration)
 4. [Project Structure](#project-structure)
 5. [API Endpoints](#api-endpoints)
+   - [Authentication](#authentication)
+   - [Songs](#songs)
+   - [Playlists](#playlists)
 6. [Usage](#usage)
 
 ## System Requirements
@@ -147,7 +150,7 @@ backend-media-player/
 ├── configs/                    # Directory for configuration files
 │   └── Database.js             # MySQL connection configuration
 ├── controllers/                # Directory for API controllers
-│   ├── AuthController.js       # Handles user registration/login
+│   ├── AuthController.js       # Handles user registration/login/update
 │   ├── PlaylistController.js   # Handles playlist-related APIs
 │   └── SongController.js       # Handles song-related APIs
 ├── middleware/                 # Directory for middleware
@@ -179,45 +182,110 @@ Below are the main API endpoints:
 ### Authentication
 
 - **POST /api/auth/register**
+
   - Register a new user.
-  - Body: `{ "email": "user@gmail.com", "password": "1234", "role": "user" }`
+  - Body: `{ "email": "user@gmail.com", "password": "1234", "name": "User Name", "dateOfBirth": "1990-01-01", "role": "user" }`
+  - Response (201): `{ "message": "User registered successfully", "userId": 2 }`
+
 - **POST /api/auth/login**
+
   - Log in and receive a JWT token.
   - Body: `{ "email": "user@gmail.com", "password": "1234" }`
+  - Response (200): `{ "message": "Login successful", "token": "<jwt>", "user": { "email": "user@gmail.com", "name": "User Name", "dateOfBirth": "1990-01-01", "role": "user" } }`
+
+- **PUT /api/auth/users/:id**
+
+  - Update user information (name, date of birth, password).
+  - Requires authentication.
+  - Header: `Authorization: Bearer <token>`
+  - Body: `{ "name": "Updated Name", "dateOfBirth": "1995-01-01", "password": "newpassword123" }` (at least one field required)
+  - Response (200): `{ "message": "User updated successfully", "user": { "email": "user@gmail.com", "name": "Updated Name", "dateOfBirth": "1995-01-01", "role": "user" } }`
+  - Response (403): `{ "message": "Unauthorized: You can only update your own account or must be an admin" }` (if non-admin tries to update another user)
+  - Response (404): `{ "message": "User not found" }`
+
+- **GET /api/auth/users**
+
+  - Retrieve all users (requires authentication).
+  - Header: `Authorization: Bearer <token>`
+  - Response (200): `[{ "id": 1, "email": "user@gmail.com", "name": "User Name", "date_of_birth": "1990-01-01", "created_at": "2025-05-16T10:00:00.000Z" }, ...]`
+
+- **GET /api/auth/users/:id**
+  - Retrieve a user by ID (requires authentication).
+  - Header: `Authorization: Bearer <token>`
+  - Response (200): `{ "id": 1, "email": "user@gmail.com", "name": "User Name", "date_of_birth": "1990-01-01", "created_at": "2025-05-16T10:00:00.000Z" }`
 
 ### Songs
 
 - **POST /api/songs/** (Admin)
+
   - Add a new song.
   - Body (form-data): `title`, `genres`, `artists`, `file` (mp3/wav/m4a).
   - Header: `Authorization: Bearer <token>`
+  - Response (201): `{ "message": "Song added successfully", "songId": 1 }`
+
 - **GET /api/songs/**
+
   - Retrieve all songs.
+  - Response (200): `[{ "id": 1, "title": "ChamHoa", "artists": ["Mono"], "file_path": "/uploads/1747325319270-ChamHoa.mp3", "uploaded_at": "2025-05-16T10:00:00.000Z" }, ...]`
+
 - **GET /api/songs/stream/:id**
+
   - Stream a song by ID (supports HTTP Range).
+  - Response (200/206): Audio stream (`Content-Type: audio/mpeg`)
+
 - **GET /api/songs/search?q=<query>**
+
   - Search songs by title or artist.
+  - Response (200): `[{ "id": 1, "title": "ChamHoa", "artists": ["Mono"], "file_path": "/uploads/1747325319270-ChamHoa.mp3", "uploaded_at": "2025-05-16T10:00:00.000Z" }, ...]`
+
 - **GET /api/songs/search-by-genres?genres=<genres>**
+
   - Search songs by genre.
+  - Response (200): `[{ "id": 1, "title": "ChamHoa", "artists": ["Mono"], "file_path": "/Uploads/1747325319270-ChamHoa.mp3", "uploaded_at": "2025-05-16T10:00:00.000Z" }, ...]`
+
 - **PUT /api/songs/:id** (Admin)
+
   - Update song information.
   - Body: `{ "title": "New Title", "genres": ["Pop"], "artists": ["Artist 1"] }`
+  - Header: `Authorization: Bearer <token>`
+  - Response (200): `{ "message": "Song updated successfully" }`
+
 - **DELETE /api/songs/:id** (Admin)
   - Delete a song.
   - Header: `Authorization: Bearer <token>`
+  - Response (200): `{ "message": "Song deleted successfully" }`
 
 ### Playlists
 
 - **POST /api/playlists/** (User/Admin)
+
   - Create a new playlist.
   - Body: `{ "name": "My Playlist" }`
+  - Header: `Authorization: Bearer <token>`
+  - Response (201): `{ "message": "Playlist created successfully", "playlistId": 1 }`
+
 - **GET /api/playlists/:playlistId/songs**
+
   - Retrieve songs in a playlist.
+  - Response (200): `[{ "id": 1, "title": "ChamHoa", "artists": ["Mono"], "file_path": "/Uploads/1747325319270-ChamHoa.mp3", "uploaded_at": "2025-05-16T10:00:00.000Z" }, ...]`
+
 - **POST /api/playlists/songs** (User/Admin)
+
   - Add a song to a playlist.
   - Body: `{ "playlistId": 1, "songId": 1 }`
+  - Header: `Authorization: Bearer <token>`
+  - Response (200): `{ "message": "Song added to playlist successfully" }`
+
 - **DELETE /api/playlists/:playlistId/songs/:songId** (User/Admin)
+
   - Remove a song from a playlist.
+  - Header: `Authorization: Bearer <token>`
+  - Response (200): `{ "message": "Song removed from playlist successfully" }`
+
+- **DELETE /api/playlists/:playlistId** (User/Admin)
+  - Delete a playlist.
+  - Header: `Authorization: Bearer <token>`
+  - Response (200): `{ "message": "Playlist deleted successfully" }`
 
 ## Usage
 
@@ -251,7 +319,14 @@ Below are the main API endpoints:
    - **Expected Response** (HTTP 200):
      ```json
      {
-       "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NDY1ODcyOTcsImV4cCI6MTc0NjU5MDg5N30.w5PI1_zR1Hl2XxyXNqw-qMBFvO8Kz0ONKg9s57BbFC8"
+       "message": "Login successful",
+       "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NDY1ODcyOTcsImV4cCI6MTc0NjU5MDg5N30.w5PI1_zR1Hl2XxyXNqw-qMBFvO8Kz0ONKg9s57BbFC8",
+       "user": {
+         "email": "admin@gmail.com",
+         "name": "Admin User",
+         "dateOfBirth": "1980-01-01",
+         "role": "admin"
+       }
      }
      ```
    - Save the token for use in requests requiring authentication (add to the header as `Authorization: Bearer <token>`).
@@ -267,6 +342,8 @@ Below are the main API endpoints:
        {
          "email": "newuser@gmail.com",
          "password": "1234",
+         "name": "New User",
+         "dateOfBirth": "1990-01-01",
          "role": "user"
        }
        ```
@@ -274,17 +351,55 @@ Below are the main API endpoints:
        ```bash
        curl -X POST http://localhost:3000/api/auth/register \
        -H "Content-Type: application/json" \
-       -d '{"email":"newuser@gmail.com","password":"1234","role":"user"}'
+       -d '{"email":"newuser@gmail.com","password":"1234","name":"New User","dateOfBirth":"1990-01-01","role":"user"}'
        ```
    - **Expected Response** (HTTP 201):
      ```json
      {
-       "message": "User registered successfully",
-       "userId": 2
+       "message": "User registered successfully"
      }
      ```
 
-4. **Add a new song** (Admin):
+4. **Update user information**:
+
+   - Use the `/api/auth/users/:id` endpoint to update user details.
+   - **Request** (Postman or cURL):
+     - **Method**: PUT
+     - **URL**: `http://localhost:3000/api/auth/users/2`
+     - **Header**:
+       ```
+       Authorization: Bearer <token>
+       Content-Type: application/json
+       ```
+     - **Body** (application/json):
+       ```json
+       {
+         "name": "Updated User",
+         "dateOfBirth": "1995-01-01",
+         "password": "newpassword123"
+       }
+       ```
+     - **cURL Example**:
+       ```bash
+       curl -X PUT http://localhost:3000/api/auth/users/2 \
+       -H "Authorization: Bearer <token>" \
+       -H "Content-Type: application/json" \
+       -d '{"name":"Updated User","dateOfBirth":"1995-01-01","password":"newpassword123"}'
+       ```
+   - **Expected Response** (HTTP 200):
+     ```json
+     {
+       "message": "User updated successfully",
+       "user": {
+         "email": "newuser@gmail.com",
+         "name": "Updated User",
+         "dateOfBirth": "1995-01-01",
+         "role": "user"
+       }
+     }
+     ```
+
+5. **Add a new song** (Admin):
 
    - Use the `/api/songs/` endpoint to add a song.
    - **Request** (Postman or cURL):
@@ -321,7 +436,7 @@ Below are the main API endpoints:
      ```
      - **Expected Output**: You should see a file (e.g., `1747325319270-ChamHoa.mp3`).
 
-5. **Retrieve all songs**:
+6. **Retrieve all songs**:
 
    - Use the `/api/songs/` endpoint to fetch all songs.
    - **Request** (Postman or cURL):
@@ -338,13 +453,14 @@ Below are the main API endpoints:
          "id": 1,
          "title": "ChamHoa",
          "artists": ["Mono"],
-         "file_path": "/uploads/1747325319270-ChamHoa.mp3",
+         "genres": ["Pop"],
+         "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
          "uploaded_at": "2025-05-16T10:00:00.000Z"
        }
      ]
      ```
 
-6. **Stream a song**:
+7. **Stream a song**:
 
    - Use the `/api/songs/stream/:id` endpoint to stream a song.
    - **Request** (Postman or cURL):
@@ -365,7 +481,7 @@ Below are the main API endpoints:
        Content-Range: bytes 0-5242879/5242880
        ```
 
-7. **Search songs by title or artist**:
+8. **Search songs by title or artist**:
 
    - Use the `/api/songs/search?q=<query>` endpoint.
    - **Request** (Postman or cURL):
@@ -382,13 +498,14 @@ Below are the main API endpoints:
          "id": 1,
          "title": "ChamHoa",
          "artists": ["Mono"],
-         "file_path": "/uploads/1747325319270-ChamHoa.mp3",
+         "genres": ["Pop"],
+         "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
          "uploaded_at": "2025-05-16T10:00:00.000Z"
        }
      ]
      ```
 
-8. **Search songs by genre**:
+9. **Search songs by genre**:
 
    - Use the `/api/songs/search-by-genres?genres=<genres>` endpoint.
    - **Request** (Postman or cURL):
@@ -405,46 +522,47 @@ Below are the main API endpoints:
          "id": 1,
          "title": "ChamHoa",
          "artists": ["Mono"],
-         "file_path": "/uploads/1747325319270-ChamHoa.mp3",
+         "genres": ["Pop"],
+         "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
          "uploaded_at": "2025-05-16T10:00:00.000Z"
        }
      ]
      ```
 
-9. **Update song information** (Admin):
+10. **Update song information** (Admin):
 
-   - Use the `/api/songs/:id` endpoint.
-   - **Request** (Postman or cURL):
-     - **Method**: PUT
-     - **URL**: `http://localhost:3000/api/songs/1`
-     - **Header**:
-       ```
-       Authorization: Bearer <token>
-       Content-Type: application/json
-       ```
-     - **Body** (application/json):
-       ```json
-       {
-         "title": "ChamHoa Updated",
-         "genres": ["Pop", "Rock"],
-         "artists": ["Mono", "Artist 2"]
-       }
-       ```
-     - **cURL Example**:
-       ```bash
-       curl -X PUT http://localhost:3000/api/songs/1 \
-       -H "Authorization: Bearer <token>" \
-       -H "Content-Type: application/json" \
-       -d '{"title":"ChamHoa Updated","genres":["Pop","Rock"],"artists":["Mono","Artist 2"]}'
-       ```
-   - **Expected Response** (HTTP 200):
-     ```json
-     {
-       "message": "Song updated successfully"
-     }
-     ```
+    - Use the `/api/songs/:id` endpoint.
+    - **Request** (Postman or cURL):
+      - **Method**: PUT
+      - **URL**: `http://localhost:3000/api/songs/1`
+      - **Header**:
+        ```
+        Authorization: Bearer <token>
+        Content-Type: application/json
+        ```
+      - **Body** (application/json):
+        ```json
+        {
+          "title": "ChamHoa Updated",
+          "genres": ["Pop", "Rock"],
+          "artists": ["Mono", "Artist 2"]
+        }
+        ```
+      - **cURL Example**:
+        ```bash
+        curl -X PUT http://localhost:3000/api/songs/1 \
+        -H "Authorization: Bearer <token>" \
+        -H "Content-Type: application/json" \
+        -d '{"title":"ChamHoa Updated","genres":["Pop","Rock"],"artists":["Mono","Artist 2"]}'
+        ```
+    - **Expected Response** (HTTP 200):
+      ```json
+      {
+        "message": "Song updated successfully"
+      }
+      ```
 
-10. **Delete a song** (Admin):
+11. **Delete a song** (Admin):
 
     - Use the `/api/songs/:id` endpoint.
     - **Request** (Postman or cURL):
@@ -466,7 +584,7 @@ Below are the main API endpoints:
       }
       ```
 
-11. **Create a playlist** (User/Admin):
+12. **Create a playlist** (User/Admin):
 
     - Use the `/api/playlists/` endpoint.
     - **Request** (Postman or cURL):
@@ -498,7 +616,7 @@ Below are the main API endpoints:
       }
       ```
 
-12. **Retrieve songs in a playlist**:
+13. **Retrieve songs in a playlist**:
 
     - Use the `/api/playlists/:playlistId/songs` endpoint.
     - **Request** (Postman or cURL):
@@ -515,13 +633,14 @@ Below are the main API endpoints:
           "id": 1,
           "title": "ChamHoa",
           "artists": ["Mono"],
-          "file_path": "/uploads/1747325319270-ChamHoa.mp3",
+          "genres": ["Pop"],
+          "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
           "uploaded_at": "2025-05-16T10:00:00.000Z"
         }
       ]
       ```
 
-13. **Add a song to a playlist** (User/Admin):
+14. **Add a song to a playlist** (User/Admin):
 
     - Use the `/api/playlists/songs` endpoint.
     - **Request** (Postman or cURL):
@@ -553,7 +672,7 @@ Below are the main API endpoints:
       }
       ```
 
-14. **Remove a song from a playlist** (User/Admin):
+15. **Remove a song from a playlist** (User/Admin):
 
     - Use the `/api/playlists/:playlistId/songs/:songId` endpoint.
     - **Request** (Postman or cURL):
@@ -575,7 +694,7 @@ Below are the main API endpoints:
       }
       ```
 
-15. **Delete a playlist** (User/Admin):
+16. **Delete a playlist** (User/Admin):
 
     - Use the `/api/playlists/:playlistId` endpoint.
     - **Request** (Postman or cURL):
@@ -597,7 +716,7 @@ Below are the main API endpoints:
       }
       ```
 
-16. **Default admin account**:
+17. **Default admin account**:
     - Log in with:
       ```json
       {

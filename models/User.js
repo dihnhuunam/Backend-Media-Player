@@ -34,4 +34,31 @@ export class User {
     );
     return result.insertId;
   }
+
+  static async update(id, updates) {
+    const fields = [];
+    const values = [];
+
+    if (updates.name) {
+      fields.push("name = ?");
+      values.push(updates.name);
+    }
+    if (updates.date_of_birth) {
+      fields.push("date_of_birth = ?");
+      values.push(updates.date_of_birth);
+    }
+    if (updates.password) {
+      fields.push("password = ?");
+      values.push(updates.password);
+    }
+
+    if (fields.length === 0) {
+      return;
+    }
+
+    values.push(id);
+    const query = `UPDATE users SET ${fields.join(", ")} WHERE id = ?`;
+    const [result] = await pool.query(query, values);
+    return result.affectedRows;
+  }
 }
