@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     name VARCHAR(100) NOT NULL,
-    date_of_birth DATE NOT NULL,
+    date_of_birth DATETIME NOT NULL, -- Thay DATE bằng DATETIME để hỗ trợ giờ
     role ENUM('user', 'admin') DEFAULT 'user',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -74,3 +74,6 @@ CREATE INDEX idx_user_id ON playlists(user_id);
 CREATE INDEX idx_title ON songs(title);
 CREATE INDEX idx_genre_name ON genres(name);
 CREATE INDEX idx_artist_name ON artists(name);
+
+-- UTC timezone
+SET time_zone = '+00:00';

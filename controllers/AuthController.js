@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import moment from "moment";
 import { User } from "../models/User.js";
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -21,8 +22,13 @@ export async function register(req, res) {
       return res.status(400).json({ message: "Email already exists" });
     }
 
+    // Format date
+    const formattedDate = moment(dateOfBirth, moment.ISO_8601, true).isValid()
+      ? moment(dateOfBirth).format("YYYY-MM-DD")
+      : dateOfBirth;
+
     // Create new user
-    await User.create(email, password, name, dateOfBirth);
+    await User.create(email, password, name, formattedDate);
 
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
@@ -64,6 +70,7 @@ export async function login(req, res) {
       message: "Login successful",
       token,
       user: {
+        id: user.id,
         email: user.email,
         name: user.name,
         dateOfBirth: user.date_of_birth,
@@ -110,22 +117,18 @@ export async function updateUser(req, res) {
 
   // Check if at least one field is provided
   if (!name && !dateOfBirth && !password) {
-    return res
-      .status(400)
-      .json({
-        message:
-          "At least one field (name, dateOfBirth, password) must be provided",
-      });
+    return res.status(400).json({
+      message:
+        "At least one field (name, dateOfBirth, password) must be provided",
+    });
   }
 
   // Check if user is authorized (own account or admin)
   if (req.user.id !== parseInt(id) && req.user.role !== "admin") {
-    return res
-      .status(403)
-      .json({
-        message:
-          "Unauthorized: You can only update your own account or must be an admin",
-      });
+    return res.status(403).json({
+      message:
+        "Unauthorized: You can only update your own account or must be an admin",
+    });
   }
 
   try {
@@ -138,7 +141,14 @@ export async function updateUser(req, res) {
     // Prepare update fields
     const updates = {};
     if (name) updates.name = name;
-    if (dateOfBirth) updates.date_of_birth = dateOfBirth;
+    if (dateOfBirth) {
+      // Chuẩn hóa định dạng ngày
+      if (moment(dateOfBirth, moment.ISO_8601, true).isValid()) {
+        updates.date_of_birth = moment(dateOfBirth).format("YYYY-MM-DD");
+      } else {
+        return res.status(400).json({ message: "Invalid dateOfBirth format" });
+      }
+    }
     if (password) updates.password = await bcrypt.hash(password, 10);
 
     // Update user in database
