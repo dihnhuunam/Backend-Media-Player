@@ -46,69 +46,69 @@ Backend Media Player is an API server built with **Node.js** and **Express**, de
 
      -- Users table
      CREATE TABLE IF NOT EXISTS users (
-     id INT AUTO_INCREMENT PRIMARY KEY,
-     email VARCHAR(255) NOT NULL UNIQUE,
-     password VARCHAR(255) NOT NULL,
-     name VARCHAR(100) NOT NULL,
-     date_of_birth DATE NOT NULL,
-     role ENUM('user', 'admin') DEFAULT 'user',
-     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+       id INT AUTO_INCREMENT PRIMARY KEY,
+       email VARCHAR(255) NOT NULL UNIQUE,
+       password VARCHAR(255) NOT NULL,
+       name VARCHAR(100) NOT NULL,
+       date_of_birth DATE NOT NULL,
+       role ENUM('user', 'admin') DEFAULT 'user',
+       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
      );
 
      -- Genres table
      CREATE TABLE IF NOT EXISTS genres (
-     id INT AUTO_INCREMENT PRIMARY KEY,
-     name VARCHAR(100) NOT NULL UNIQUE
+       id INT AUTO_INCREMENT PRIMARY KEY,
+       name VARCHAR(100) NOT NULL UNIQUE
      );
 
      -- Artists table
      CREATE TABLE IF NOT EXISTS artists (
-     id INT AUTO_INCREMENT PRIMARY KEY,
-     name VARCHAR(100) NOT NULL UNIQUE
+       id INT AUTO_INCREMENT PRIMARY KEY,
+       name VARCHAR(100) NOT NULL UNIQUE
      );
 
      -- Songs table (admin-uploaded songs)
      CREATE TABLE IF NOT EXISTS songs (
-     id INT AUTO_INCREMENT PRIMARY KEY,
-     title VARCHAR(255) NOT NULL,
-     file_path VARCHAR(255) NOT NULL,
-     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+       id INT AUTO_INCREMENT PRIMARY KEY,
+       title VARCHAR(255) NOT NULL,
+       file_path VARCHAR(255) NOT NULL,
+       uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
      );
 
      -- Song_genres table (many-to-many relationship between songs and genres)
      CREATE TABLE IF NOT EXISTS song_genres (
-     song_id INT NOT NULL,
-     genre_id INT NOT NULL,
-     PRIMARY KEY (song_id, genre_id),
-     FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE,
-     FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE CASCADE
+       song_id INT NOT NULL,
+       genre_id INT NOT NULL,
+       PRIMARY KEY (song_id, genre_id),
+       FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE,
+       FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE CASCADE
      );
 
      -- Song_artists table (many-to-many relationship between songs and artists)
      CREATE TABLE IF NOT EXISTS song_artists (
-     song_id INT NOT NULL,
-     artist_id INT NOT NULL,
-     PRIMARY KEY (song_id, artist_id),
-     FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE,
-     FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE
+       song_id INT NOT NULL,
+       artist_id INT NOT NULL,
+       PRIMARY KEY (song_id, artist_id),
+       FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE,
+       FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE
      );
 
      -- Playlists table (user-created playlists)
      CREATE TABLE IF NOT EXISTS playlists (
-     id INT AUTO_INCREMENT PRIMARY KEY,
-     user_id INT NOT NULL,
-     name VARCHAR(100) NOT NULL,
-     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+       id INT AUTO_INCREMENT PRIMARY KEY,
+       user_id INT NOT NULL,
+       name VARCHAR(100) NOT NULL,
+       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
      );
 
      -- Playlist_songs table (many-to-many relationship between playlists and songs)
      CREATE TABLE IF NOT EXISTS playlist_songs (
-     playlist_id INT NOT NULL,
-     song_id INT NOT NULL,
-     PRIMARY KEY (playlist_id, song_id),
-     FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
-     FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE
+       playlist_id INT NOT NULL,
+       song_id INT NOT NULL,
+       PRIMARY KEY (playlist_id, song_id),
+       FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
+       FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE
      );
 
      -- Indexes for faster lookup
@@ -184,35 +184,117 @@ Below are the main API endpoints:
 - **POST /api/auth/register**
 
   - Register a new user.
-  - Body: `{ "email": "user@gmail.com", "password": "1234", "name": "User Name", "dateOfBirth": "1990-01-01", "role": "user" }`
-  - Response (201): `{ "message": "User registered successfully", "userId": 2 }`
+  - Body:
+    ```json
+    {
+      "email": "user@gmail.com",
+      "password": "1234",
+      "name": "User Name",
+      "dateOfBirth": "1990-01-01",
+      "role": "user"
+    }
+    ```
+  - Response (201):
+    ```json
+    {
+      "message": "User registered successfully",
+      "userId": 2
+    }
+    ```
 
 - **POST /api/auth/login**
 
   - Log in and receive a JWT token.
-  - Body: `{ "email": "user@gmail.com", "password": "1234" }`
-  - Response (200): `{ "message": "Login successful", "token": "<jwt>", "user": { "email": "user@gmail.com", "name": "User Name", "dateOfBirth": "1990-01-01", "role": "user" } }`
+  - Body:
+    ```json
+    {
+      "email": "user@gmail.com",
+      "password": "1234"
+    }
+    ```
+  - Response (200):
+    ```json
+    {
+      "message": "Login successful",
+      "token": "<jwt>",
+      "user": {
+        "email": "user@gmail.com",
+        "name": "User Name",
+        "dateOfBirth": "1990-01-01",
+        "role": "user"
+      }
+    }
+    ```
 
 - **PUT /api/auth/users/:id**
 
   - Update user information (name, date of birth, password).
   - Requires authentication.
   - Header: `Authorization: Bearer <token>`
-  - Body: `{ "name": "Updated Name", "dateOfBirth": "1995-01-01", "password": "newpassword123" }` (at least one field required)
-  - Response (200): `{ "message": "User updated successfully", "user": { "email": "user@gmail.com", "name": "Updated Name", "dateOfBirth": "1995-01-01", "role": "user" } }`
-  - Response (403): `{ "message": "Unauthorized: You can only update your own account or must be an admin" }` (if non-admin tries to update another user)
-  - Response (404): `{ "message": "User not found" }`
+  - Body:
+    ```json
+    {
+      "name": "Updated Name",
+      "dateOfBirth": "1995-01-01",
+      "password": "newpassword123"
+    }
+    ```
+  - Response (200):
+    ```json
+    {
+      "message": "User updated successfully",
+      "user": {
+        "email": "user@gmail.com",
+        "name": "Updated Name",
+        "dateOfBirth": "1995-01-01",
+        "role": "user"
+      }
+    }
+    ```
+  - Response (403):
+    ```json
+    {
+      "message": "Unauthorized: You can only update your own account or must be an admin"
+    }
+    ```
+  - Response (404):
+    ```json
+    {
+      "message": "User not found"
+    }
+    ```
 
 - **GET /api/auth/users**
 
   - Retrieve all users (requires authentication).
   - Header: `Authorization: Bearer <token>`
-  - Response (200): `[{ "id": 1, "email": "user@gmail.com", "name": "User Name", "date_of_birth": "1990-01-01", "created_at": "2025-05-16T10:00:00.000Z" }, ...]`
+  - Response (200):
+    ```json
+    [
+      {
+        "id": 1,
+        "email": "user@gmail.com",
+        "name": "User Name",
+        "date_of_birth": "1990-01-01",
+        "created_at": "2025-05-16T10:00:00.000Z"
+      }
+    ]
+    ```
 
 - **GET /api/auth/users/:id**
+
   - Retrieve a user by ID (requires authentication).
   - Header: `Authorization: Bearer <token>`
-  - Response (200): `{ "id": 1, "email": "user@gmail.com", "name": "User Name", "date_of_birth": "1990-01-01", "created_at": "2025-05-16T10:00:00.000Z" }`
+  - Response (200):
+    ```json
+    {
+      "id": 1,
+      "email": "user@gmail.com",
+      "name": "User Name",
+      "date_of_birth": "1990-01-01",
+      "created_at": "2025-05-16T10:00:00.000Z"
+    }
+    ```
 
 ### Songs
 
@@ -221,12 +303,29 @@ Below are the main API endpoints:
   - Add a new song.
   - Body (form-data): `title`, `genres`, `artists`, `file` (mp3/wav/m4a).
   - Header: `Authorization: Bearer <token>`
-  - Response (201): `{ "message": "Song added successfully", "songId": 1 }`
+  - Response (201):
+    ```json
+    {
+      "message": "Song added successfully",
+      "songId": 1
+    }
+    ```
 
 - **GET /api/songs/**
 
   - Retrieve all songs.
-  - Response (200): `[{ "id": 1, "title": "ChamHoa", "artists": ["Mono"], "file_path": "/uploads/1747325319270-ChamHoa.mp3", "uploaded_at": "2025-05-16T10:00:00.000Z" }, ...]`
+  - Response (200):
+    ```json
+    [
+      {
+        "id": 1,
+        "title": "ChamHoa",
+        "artists": ["Mono"],
+        "file_path": "/uploads/1747325319270-ChamHoa.mp3",
+        "uploaded_at": "2025-05-16T10:00:00.000Z"
+      }
+    ]
+    ```
 
 - **GET /api/songs/stream/:id**
 
@@ -236,56 +335,161 @@ Below are the main API endpoints:
 - **GET /api/songs/search?q=<query>**
 
   - Search songs by title or artist.
-  - Response (200): `[{ "id": 1, "title": "ChamHoa", "artists": ["Mono"], "file_path": "/uploads/1747325319270-ChamHoa.mp3", "uploaded_at": "2025-05-16T10:00:00.000Z" }, ...]`
+  - Response (200):
+    ```json
+    [
+      {
+        "id": 1,
+        "title": "ChamHoa",
+        "artists": ["Mono"],
+        "file_path": "/uploads/1747325319270-ChamHoa.mp3",
+        "uploaded_at": "2025-05-16T10:00:00.000Z"
+      }
+    ]
+    ```
 
 - **GET /api/songs/search-by-genres?genres=<genres>**
 
   - Search songs by genre.
-  - Response (200): `[{ "id": 1, "title": "ChamHoa", "artists": ["Mono"], "file_path": "/Uploads/1747325319270-ChamHoa.mp3", "uploaded_at": "2025-05-16T10:00:00.000Z" }, ...]`
+  - Response (200):
+    ```json
+    [
+      {
+        "id": 1,
+        "title": "ChamHoa",
+        "artists": ["Mono"],
+        "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
+        "uploaded_at": "2025-05-16T10:00:00.000Z"
+      }
+    ]
+    ```
 
 - **PUT /api/songs/:id** (Admin)
 
   - Update song information.
-  - Body: `{ "title": "New Title", "genres": ["Pop"], "artists": ["Artist 1"] }`
+  - Body:
+    ```json
+    {
+      "title": "New Title",
+      "genres": ["Pop"],
+      "artists": ["Artist 1"]
+    }
+    ```
   - Header: `Authorization: Bearer <token>`
-  - Response (200): `{ "message": "Song updated successfully" }`
+  - Response (200):
+    ```json
+    {
+      "message": "Song updated successfully"
+    }
+    ```
 
 - **DELETE /api/songs/:id** (Admin)
+
   - Delete a song.
   - Header: `Authorization: Bearer <token>`
-  - Response (200): `{ "message": "Song deleted successfully" }`
+  - Response (200):
+    ```json
+    {
+      "message": "Song deleted successfully"
+    }
+    ```
 
 ### Playlists
+
+- **GET /api/playlists/** (User/Admin)
+
+  - Retrieve all playlists the user has access to.
+  - Header: `Authorization: Bearer <token>`
+  - Response (200):
+    ```json
+    [
+      {
+        "id": 1,
+        "name": "Test1 Playlist",
+        "created_at": "2025-05-15T16:46:33.000Z"
+      },
+      {
+        "id": 4,
+        "name": "Nhạc nhẹ",
+        "created_at": "2025-05-21T17:34:56.000Z"
+      }
+    ]
+    ```
 
 - **POST /api/playlists/** (User/Admin)
 
   - Create a new playlist.
-  - Body: `{ "name": "My Playlist" }`
+  - Body:
+    ```json
+    {
+      "name": "My Playlist"
+    }
+    ```
   - Header: `Authorization: Bearer <token>`
-  - Response (201): `{ "message": "Playlist created successfully", "playlistId": 1 }`
+  - Response (201):
+    ```json
+    {
+      "message": "Playlist created successfully",
+      "playlistId": 1
+    }
+    ```
 
 - **GET /api/playlists/:playlistId/songs**
 
   - Retrieve songs in a playlist.
-  - Response (200): `[{ "id": 1, "title": "ChamHoa", "artists": ["Mono"], "file_path": "/Uploads/1747325319270-ChamHoa.mp3", "uploaded_at": "2025-05-16T10:00:00.000Z" }, ...]`
+  - Response (200):
+    ```json
+    [
+      {
+        "id": 1,
+        "title": "ChamHoa",
+        "artists": ["Mono"],
+        "genres": ["Pop"],
+        "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
+        "uploaded_at": "2025-05-16T10:00:00.000Z"
+      }
+    ]
+    ```
 
 - **POST /api/playlists/songs** (User/Admin)
 
   - Add a song to a playlist.
-  - Body: `{ "playlistId": 1, "songId": 1 }`
+  - Body:
+    ```json
+    {
+      "playlistId": 1,
+      "songId": 1
+    }
+    ```
   - Header: `Authorization: Bearer <token>`
-  - Response (200): `{ "message": "Song added to playlist successfully" }`
+  - Response (200):
+    ```json
+    {
+      "message": "Song added to playlist successfully"
+    }
+    ```
 
 - **DELETE /api/playlists/:playlistId/songs/:songId** (User/Admin)
 
   - Remove a song from a playlist.
   - Header: `Authorization: Bearer <token>`
-  - Response (200): `{ "message": "Song removed from playlist successfully" }`
+  - Response (200):
+    ```json
+    {
+      "message": "Song removed from playlist successfully"
+    }
+    ```
 
 - **DELETE /api/playlists/:playlistId** (User/Admin)
+
   - Delete a playlist.
   - Header: `Authorization: Bearer <token>`
-  - Response (200): `{ "message": "Playlist deleted successfully" }`
+  - Response (200):
+    ```json
+    {
+      "message": "Playlist deleted successfully"
+    }
+    ```
 
 ## Usage
 
@@ -616,7 +820,38 @@ Below are the main API endpoints:
       }
       ```
 
-13. **Retrieve songs in a playlist**:
+13. **Retrieve all playlists** (User/Admin):
+
+    - Use the `/api/playlists/` endpoint to fetch all playlists the user has access to.
+    - **Request** (Postman or cURL):
+      - **Method**: GET
+      - **URL**: `http://localhost:3000/api/playlists/`
+      - **Header**:
+        ```
+        Authorization: Bearer <token>
+        ```
+      - **cURL Example**:
+        ```bash
+        curl -X GET http://localhost:3000/api/playlists/ \
+        -H "Authorization: Bearer <token>"
+        ```
+    - **Expected Response** (HTTP 200):
+      ```json
+      [
+        {
+          "id": 1,
+          "name": "Test1 Playlist",
+          "created_at": "2025-05-15T16:46:33.000Z"
+        },
+        {
+          "id": 4,
+          "name": "Nhạc nhẹ",
+          "created_at": "2025-05-21T17:34:56.000Z"
+        }
+      ]
+      ```
+
+14. **Retrieve songs in a playlist**:
 
     - Use the `/api/playlists/:playlistId/songs` endpoint.
     - **Request** (Postman or cURL):
@@ -640,7 +875,7 @@ Below are the main API endpoints:
       ]
       ```
 
-14. **Add a song to a playlist** (User/Admin):
+15. **Add a song to a playlist** (User/Admin):
 
     - Use the `/api/playlists/songs` endpoint.
     - **Request** (Postman or cURL):
@@ -672,7 +907,7 @@ Below are the main API endpoints:
       }
       ```
 
-15. **Remove a song from a playlist** (User/Admin):
+16. **Remove a song from a playlist** (User/Admin):
 
     - Use the `/api/playlists/:playlistId/songs/:songId` endpoint.
     - **Request** (Postman or cURL):
@@ -694,7 +929,7 @@ Below are the main API endpoints:
       }
       ```
 
-16. **Delete a playlist** (User/Admin):
+17. **Delete a playlist** (User/Admin):
 
     - Use the `/api/playlists/:playlistId` endpoint.
     - **Request** (Postman or cURL):
@@ -716,7 +951,7 @@ Below are the main API endpoints:
       }
       ```
 
-17. **Default admin account**:
+18. **Default admin account**:
     - Log in with:
       ```json
       {
@@ -724,3 +959,8 @@ Below are the main API endpoints:
         "password": "1234"
       }
       ```
+
+````
+
+<!-- ``` -->
+````
