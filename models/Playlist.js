@@ -1,3 +1,4 @@
+// Playlist.js
 import pool from "../configs/Database.js";
 
 export class Playlist {
@@ -23,5 +24,24 @@ export class Playlist {
       [playlistId, userId]
     );
     return rows[0];
+  }
+
+  // Search playlists by name for a specific user
+  static async searchByName(query, userId, limit = 10, offset = 0) {
+    try {
+      const [rows] = await pool.query(
+        `
+        SELECT id, name, created_at 
+        FROM playlists 
+        WHERE user_id = ? AND name LIKE ? 
+        LIMIT ? OFFSET ?
+        `,
+        [userId, `%${query}%`, limit, offset]
+      );
+      return rows;
+    } catch (error) {
+      console.error("Error searching playlists:", error);
+      throw error;
+    }
   }
 }

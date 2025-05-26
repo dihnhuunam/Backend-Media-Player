@@ -321,7 +321,7 @@ Below are the main API endpoints:
         "id": 1,
         "title": "ChamHoa",
         "artists": ["Mono"],
-        "file_path": "/uploads/1747325319270-ChamHoa.mp3",
+        "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
         "uploaded_at": "2025-05-16T10:00:00.000Z"
       }
     ]
@@ -342,7 +342,7 @@ Below are the main API endpoints:
         "id": 1,
         "title": "ChamHoa",
         "artists": ["Mono"],
-        "file_path": "/uploads/1747325319270-ChamHoa.mp3",
+        "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
         "uploaded_at": "2025-05-16T10:00:00.000Z"
       }
     ]
@@ -416,6 +416,37 @@ Below are the main API endpoints:
     ]
     ```
 
+- **GET /api/playlists/search?q=<query>** (User/Admin)
+
+  - Search playlists by name for the authenticated user.
+  - Query Parameters:
+    - `q` (required): Search term for playlist name.
+    - `limit` (optional): Number of results to return (default: 10).
+    - `offset` (optional): Number of results to skip for pagination (default: 0).
+  - Header: `Authorization: Bearer <token>`
+  - Response (200):
+    ```json
+    [
+      {
+        "id": 1,
+        "name": "Test1 Playlist",
+        "created_at": "2025-05-15T16:46:33.000Z"
+      }
+    ]
+    ```
+  - Response (400):
+    ```json
+    {
+      "message": "Query parameter 'q' is required"
+    }
+    ```
+  - Response (401):
+    ```json
+    {
+      "message": "Invalid or expired token"
+    }
+    ```
+
 - **POST /api/playlists/** (User/Admin)
 
   - Create a new playlist.
@@ -434,7 +465,7 @@ Below are the main API endpoints:
     }
     ```
 
-- **GET /api/playlists/:playlistId/songs**
+- **GET /api/playlists/:playlistId/songs** (User/Admin)
 
   - Retrieve songs in a playlist.
   - Response (200):
@@ -444,11 +475,50 @@ Below are the main API endpoints:
         "id": 1,
         "title": "ChamHoa",
         "artists": ["Mono"],
-        "genres": ["Pop"],
         "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
         "uploaded_at": "2025-05-16T10:00:00.000Z"
       }
     ]
+    ```
+
+- **GET /api/playlists/:playlistId/songs/search?q=<query>** (User/Admin)
+
+  - Search songs in a specific playlist by title or artist name.
+  - Query Parameters:
+    - `q` (required): Search term for song title or artist name.
+    - `limit` (optional): Number of results to return (default: 10).
+    - `offset` (optional): Number of results to skip for pagination (default: 0).
+  - Path Parameter: `playlistId` (required): ID of the playlist.
+  - Header: `Authorization: Bearer <token>`
+  - Response (200):
+    ```json
+    [
+      {
+        "id": 1,
+        "title": "ChamHoa",
+        "artists": ["Mono"],
+        "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
+        "uploaded_at": "2025-05-16T10:00:00.000Z"
+      }
+    ]
+    ```
+  - Response (400):
+    ```json
+    {
+      "message": "Query parameter 'q' is required"
+    }
+    ```
+  - Response (403):
+    ```json
+    {
+      "message": "Unauthorized: Playlist does not belong to user"
+    }
+    ```
+  - Response (401):
+    ```json
+    {
+      "message": "Invalid or expired token"
+    }
     ```
 
 - **POST /api/playlists/songs** (User/Admin)
@@ -851,15 +921,58 @@ Below are the main API endpoints:
       ]
       ```
 
-14. **Retrieve songs in a playlist**:
+14. **Search playlists by name** (User/Admin):
+
+    - Use the `/api/playlists/search?q=<query>` endpoint to search for playlists by name.
+    - **Request** (Postman or cURL):
+      - **Method**: GET
+      - **URL**: `http://localhost:3000/api/playlists/search?q=Test1`
+      - **Header**:
+        ```
+        Authorization: Bearer <token>
+        ```
+      - **cURL Example**:
+        ```bash
+        curl -X GET "http://localhost:3000/api/playlists/search?q=Test1" \
+        -H "Authorization: Bearer <token>"
+        ```
+    - **Expected Response** (HTTP 200):
+      ```json
+      [
+        {
+          "id": 1,
+          "name": "Test1 Playlist",
+          "created_at": "2025-05-15T16:46:33.000Z"
+        }
+      ]
+      ```
+    - **Error Response** (HTTP 400, missing query):
+      ```json
+      {
+        "message": "Query parameter 'q' is required"
+      }
+      ```
+    - **Error Response** (HTTP 401, invalid token):
+      ```json
+      {
+        "message": "Invalid or expired token"
+      }
+      ```
+
+15. **Retrieve songs in a playlist** (User/Admin):
 
     - Use the `/api/playlists/:playlistId/songs` endpoint.
     - **Request** (Postman or cURL):
       - **Method**: GET
       - **URL**: `http://localhost:3000/api/playlists/1/songs`
+      - **Header**:
+        ```
+        Authorization: Bearer <token>
+        ```
       - **cURL Example**:
         ```bash
-        curl -X GET http://localhost:3000/api/playlists/1/songs
+        curl -X GET http://localhost:3000/api/playlists/1/songs \
+        -H "Authorization: Bearer <token>"
         ```
     - **Expected Response** (HTTP 200):
       ```json
@@ -868,14 +981,59 @@ Below are the main API endpoints:
           "id": 1,
           "title": "ChamHoa",
           "artists": ["Mono"],
-          "genres": ["Pop"],
           "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
           "uploaded_at": "2025-05-16T10:00:00.000Z"
         }
       ]
       ```
 
-15. **Add a song to a playlist** (User/Admin):
+16. **Search songs in a playlist** (User/Admin):
+
+    - Use the `/api/playlists/:playlistId/songs/search?q=<query>` endpoint to search for songs by title or artist in a specific playlist.
+    - **Request** (Postman or cURL):
+      - **Method**: GET
+      - **URL**: `http://localhost:3000/api/playlists/1/songs/search?q=ChamHoa`
+      - **Header**:
+        ```
+        Authorization: Bearer <token>
+        ```
+      - **cURL Example**:
+        ```bash
+        curl -X GET "http://localhost:3000/api/playlists/1/songs/search?q=ChamHoa" \
+        -H "Authorization: Bearer <token>"
+        ```
+    - **Expected Response** (HTTP 200):
+      ```json
+      [
+        {
+          "id": 1,
+          "title": "ChamHoa",
+          "artists": ["Mono"],
+          "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
+          "uploaded_at": "2025-05-16T10:00:00.000Z"
+        }
+      ]
+      ```
+    - **Error Response** (HTTP 400, missing query):
+      ```json
+      {
+        "message": "Query parameter 'q' is required"
+      }
+      ```
+    - **Error Response** (HTTP 403, unauthorized playlist):
+      ```json
+      {
+        "message": "Unauthorized: Playlist does not belong to user"
+      }
+      ```
+    - **Error Response** (HTTP 401, invalid token):
+      ```json
+      {
+        "message": "Invalid or expired token"
+      }
+      ```
+
+17. **Add a song to a playlist** (User/Admin):
 
     - Use the `/api/playlists/songs` endpoint.
     - **Request** (Postman or cURL):
@@ -907,7 +1065,7 @@ Below are the main API endpoints:
       }
       ```
 
-16. **Remove a song from a playlist** (User/Admin):
+18. **Remove a song from a playlist** (User/Admin):
 
     - Use the `/api/playlists/:playlistId/songs/:songId` endpoint.
     - **Request** (Postman or cURL):
@@ -929,7 +1087,7 @@ Below are the main API endpoints:
       }
       ```
 
-17. **Delete a playlist** (User/Admin):
+19. **Delete a playlist** (User/Admin):
 
     - Use the `/api/playlists/:playlistId` endpoint.
     - **Request** (Postman or cURL):
@@ -951,7 +1109,7 @@ Below are the main API endpoints:
       }
       ```
 
-18. **Default admin account**:
+20. **Default admin account**:
     - Log in with:
       ```json
       {
@@ -959,8 +1117,3 @@ Below are the main API endpoints:
         "password": "1234"
       }
       ```
-
-````
-
-<!-- ``` -->
-````

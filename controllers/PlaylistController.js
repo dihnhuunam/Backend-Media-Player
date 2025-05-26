@@ -35,6 +35,26 @@ export async function getUserPlaylists(req, res) {
   }
 }
 
+// Search playlists by name
+export async function searchPlaylists(req, res) {
+  const { q } = req.query;
+  const userId = req.user.id;
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = parseInt(req.query.offset) || 0;
+
+  if (!q) {
+    return res.status(400).json({ message: "Query parameter 'q' is required" });
+  }
+
+  try {
+    const playlists = await Playlist.searchByName(q, userId, limit, offset);
+    res.status(200).json(playlists);
+  } catch (error) {
+    console.error("Error searching playlists:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
 // Add a song to a playlist
 export async function addSongToPlaylist(req, res) {
   const { playlistId, songId } = req.body;
@@ -47,7 +67,6 @@ export async function addSongToPlaylist(req, res) {
   }
 
   try {
-    // Check if playlist belongs to user
     const playlist = await Playlist.findByIdAndUserId(playlistId, userId);
     if (!playlist) {
       return res
@@ -69,7 +88,6 @@ export async function getPlaylistSongs(req, res) {
   const userId = req.user.id;
 
   try {
-    // Check if playlist belongs to user
     const playlist = await Playlist.findByIdAndUserId(playlistId, userId);
     if (!playlist) {
       return res
@@ -81,6 +99,44 @@ export async function getPlaylistSongs(req, res) {
     res.status(200).json(songs);
   } catch (error) {
     console.error("Error fetching playlist songs:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+// Search songs in a playlist by title or artist
+export async function searchSongsInPlaylist(req, res) {
+  const { playlistId } = req.params;
+  const { q } = req.query;
+  const userId = req.user.id;
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = parseInt(req.query.offset) || 0;
+
+  if (!q) {
+    return res.status(400).json({ message: "Query parameter 'q' is required" });
+  }
+
+  if (!playlistId) {
+    return res.status(400).json({ message: "Playlist ID is required" });
+  }
+
+  try {
+    const playlist = await Playlist.findByIdAndUserId(playlistId, userId);
+    if (!playlist) {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized: Playlist does not belong to user" });
+    }
+
+    const songs = await PlaylistSong.searchSongsInPlaylist(
+      playlistId,
+      userId,
+      q,
+      limit,
+      offset
+    );
+    res.status(200).json(songs);
+  } catch (error) {
+    console.error("Error searching songs in playlist:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -97,7 +153,6 @@ export async function removeSongFromPlaylist(req, res) {
   }
 
   try {
-    // Check if playlist belongs to user
     const playlist = await Playlist.findByIdAndUserId(playlistId, userId);
     if (!playlist) {
       return res
@@ -133,7 +188,6 @@ export async function deletePlaylist(req, res) {
   }
 
   try {
-    // Check if playlist belongs to user
     const playlist = await Playlist.findByIdAndUserId(playlistId, userId);
     if (!playlist) {
       return res
@@ -141,12 +195,10 @@ export async function deletePlaylist(req, res) {
         .json({ message: "Unauthorized: Playlist does not belong to user" });
     }
 
-    // Delete all songs associated with the playlist
     await pool.query("DELETE FROM playlist_songs WHERE playlist_id = ?", [
       playlistId,
     ]);
 
-    // Delete the playlist
     const [result] = await pool.query("DELETE FROM playlists WHERE id = ?", [
       playlistId,
     ]);
