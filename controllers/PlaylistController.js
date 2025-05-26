@@ -141,6 +141,40 @@ export async function searchSongsInPlaylist(req, res) {
   }
 }
 
+// Update playlist name
+export async function updatePlaylistName(req, res) {
+  const { playlistId } = req.params;
+  const { name } = req.body;
+  const userId = req.user.id;
+
+  if (!name) {
+    return res.status(400).json({ message: "Playlist name is required" });
+  }
+
+  if (!playlistId) {
+    return res.status(400).json({ message: "Playlist ID is required" });
+  }
+
+  try {
+    const playlist = await Playlist.findByIdAndUserId(playlistId, userId);
+    if (!playlist) {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized: Playlist does not belong to user" });
+    }
+
+    const affectedRows = await Playlist.updateName(playlistId, userId, name);
+    if (affectedRows === 0) {
+      return res.status(404).json({ message: "Playlist not found" });
+    }
+
+    res.status(200).json({ message: "Playlist name updated successfully" });
+  } catch (error) {
+    console.error("Error updating playlist name:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
 // Remove a song from a playlist
 export async function removeSongFromPlaylist(req, res) {
   const { playlistId, songId } = req.body;

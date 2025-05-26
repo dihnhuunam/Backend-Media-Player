@@ -8,6 +8,7 @@ import {
   deletePlaylist,
   searchPlaylists,
   searchSongsInPlaylist,
+  updatePlaylistName,
 } from "../controllers/PlaylistController.js";
 import { authMiddleware } from "../middleware/AuthMiddleware.js";
 
@@ -19,6 +20,7 @@ router.get("/search", authMiddleware, searchPlaylists);
 router.post("/songs", authMiddleware, addSongToPlaylist);
 router.get("/:playlistId/songs", authMiddleware, getPlaylistSongs);
 router.get("/:playlistId/songs/search", authMiddleware, searchSongsInPlaylist);
+router.put("/:playlistId", authMiddleware, updatePlaylistName);
 router.delete("/songs", authMiddleware, removeSongFromPlaylist);
 router.delete("/:playlistId", authMiddleware, deletePlaylist);
 

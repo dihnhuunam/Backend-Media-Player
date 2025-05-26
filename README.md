@@ -465,6 +465,48 @@ Below are the main API endpoints:
     }
     ```
 
+- **PUT /api/playlists/:playlistId** (User/Admin)
+
+  - Update the name of a playlist.
+  - Path Parameter: `playlistId` (required): ID of the playlist to update.
+  - Body:
+    ```json
+    {
+      "name": "Updated Playlist Name"
+    }
+    ```
+  - Header: `Authorization: Bearer <token>`
+  - Response (200):
+    ```json
+    {
+      "message": "Playlist name updated successfully"
+    }
+    ```
+  - Response (400):
+    ```json
+    {
+      "message": "Playlist name is required"
+    }
+    ```
+  - Response (403):
+    ```json
+    {
+      "message": "Unauthorized: Playlist does not belong to user"
+    }
+    ```
+  - Response (404):
+    ```json
+    {
+      "message": "Playlist not found"
+    }
+    ```
+  - Response (401):
+    ```json
+    {
+      "message": "Invalid or expired token"
+    }
+    ```
+
 - **GET /api/playlists/:playlistId/songs** (User/Admin)
 
   - Retrieve songs in a playlist.
@@ -921,7 +963,56 @@ Below are the main API endpoints:
       ]
       ```
 
-14. **Search playlists by name** (User/Admin):
+14. **Update a playlist name** (User/Admin):
+
+    - Use the `/api/playlists/:playlistId` endpoint to update the name of a playlist.
+    - **Request** (Postman or cURL):
+      - **Method**: PUT
+      - **URL**: `http://localhost:3000/api/playlists/1`
+      - **Header**:
+        ```
+        Authorization: Bearer <token>
+        Content-Type: application/json
+        ```
+      - **Body** (application/json):
+        ```json
+        {
+          "name": "Updated Playlist Name"
+        }
+        ```
+      - **cURL Example**:
+        ```bash
+        curl -X PUT http://localhost:3000/api/playlists/1 \
+        -H "Authorization: Bearer <token>" \
+        -H "Content-Type: application/json" \
+        -d '{"name":"Updated Playlist Name"}'
+        ```
+    - **Expected Response** (HTTP 200):
+      ```json
+      {
+        "message": "Playlist name updated successfully"
+      }
+      ```
+    - **Error Response** (HTTP 400, missing name):
+      ```json
+      {
+        "message": "Playlist name is required"
+      }
+      ```
+    - **Error Response** (HTTP 403, unauthorized playlist):
+      ```json
+      {
+        "message": "Unauthorized: Playlist does not belong to user"
+      }
+      ```
+    - **Error Response** (HTTP 404, playlist not found):
+      ```json
+      {
+        "message": "Playlist not found"
+      }
+      ```
+
+15. **Search playlists by name** (User/Admin):
 
     - Use the `/api/playlists/search?q=<query>` endpoint to search for playlists by name.
     - **Request** (Postman or cURL):
@@ -959,7 +1050,7 @@ Below are the main API endpoints:
       }
       ```
 
-15. **Retrieve songs in a playlist** (User/Admin):
+16. **Retrieve songs in a playlist** (User/Admin):
 
     - Use the `/api/playlists/:playlistId/songs` endpoint.
     - **Request** (Postman or cURL):
@@ -987,7 +1078,7 @@ Below are the main API endpoints:
       ]
       ```
 
-16. **Search songs in a playlist** (User/Admin):
+17. **Search songs in a playlist** (User/Admin):
 
     - Use the `/api/playlists/:playlistId/songs/search?q=<query>` endpoint to search for songs by title or artist in a specific playlist.
     - **Request** (Postman or cURL):
@@ -1033,7 +1124,7 @@ Below are the main API endpoints:
       }
       ```
 
-17. **Add a song to a playlist** (User/Admin):
+18. **Add a song to a playlist** (User/Admin):
 
     - Use the `/api/playlists/songs` endpoint.
     - **Request** (Postman or cURL):
@@ -1065,7 +1156,7 @@ Below are the main API endpoints:
       }
       ```
 
-18. **Remove a song from a playlist** (User/Admin):
+19. **Remove a song from a playlist** (User/Admin):
 
     - Use the `/api/playlists/:playlistId/songs/:songId` endpoint.
     - **Request** (Postman or cURL):
@@ -1087,7 +1178,7 @@ Below are the main API endpoints:
       }
       ```
 
-19. **Delete a playlist** (User/Admin):
+20. **Delete a playlist** (User/Admin):
 
     - Use the `/api/playlists/:playlistId` endpoint.
     - **Request** (Postman or cURL):
@@ -1109,7 +1200,7 @@ Below are the main API endpoints:
       }
       ```
 
-20. **Default admin account**:
+21. **Default admin account**:
     - Log in with:
       ```json
       {

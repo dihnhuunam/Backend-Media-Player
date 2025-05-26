@@ -1,4 +1,3 @@
-// Playlist.js
 import pool from "../configs/Database.js";
 
 export class Playlist {
@@ -26,7 +25,6 @@ export class Playlist {
     return rows[0];
   }
 
-  // Search playlists by name for a specific user
   static async searchByName(query, userId, limit = 10, offset = 0) {
     try {
       const [rows] = await pool.query(
@@ -41,6 +39,20 @@ export class Playlist {
       return rows;
     } catch (error) {
       console.error("Error searching playlists:", error);
+      throw error;
+    }
+  }
+
+  // Update playlist name
+  static async updateName(playlistId, userId, name) {
+    try {
+      const [result] = await pool.query(
+        "UPDATE playlists SET name = ? WHERE id = ? AND user_id = ?",
+        [name, playlistId, userId]
+      );
+      return result.affectedRows;
+    } catch (error) {
+      console.error("Error updating playlist name:", error);
       throw error;
     }
   }
