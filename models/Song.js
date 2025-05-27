@@ -5,7 +5,6 @@ export class Song {
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
-      e;
       // Insert song
       const [result] = await connection.query(
         "INSERT INTO songs (title, file_path) VALUES (?, ?)",
