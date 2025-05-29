@@ -2,6 +2,7 @@ import express from "express";
 import {
   addSong,
   getSongs,
+  getSongById,
   streamSong,
   searchSongs,
   searchSongsByGenres,
@@ -16,7 +17,7 @@ import path from "path";
 // Storage media files
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/"); 
+    cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
@@ -38,6 +39,7 @@ const upload = multer({
 
 const router = express.Router();
 
+router.get("/:id", getSongById);
 router.post(
   "/",
   authMiddleware,

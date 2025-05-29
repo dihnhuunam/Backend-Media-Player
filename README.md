@@ -321,10 +321,38 @@ Below are the main API endpoints:
         "id": 1,
         "title": "ChamHoa",
         "artists": ["Mono"],
+        "genres": ["Pop"],
         "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
         "uploaded_at": "2025-05-16T10:00:00.000Z"
       }
     ]
+    ```
+
+- **GET /api/songs/:id**
+
+  - Retrieve a song by ID.
+  - Response (200):
+    ```json
+    {
+      "id": 1,
+      "title": "ChamHoa",
+      "artists": ["Mono"],
+      "genres": ["Pop"],
+      "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
+      "uploaded_at": "2025-05-16T10:00:00.000Z"
+    }
+    ```
+  - Response (404):
+    ```json
+    {
+      "message": "Song not found"
+    }
+    ```
+  - Response (500):
+    ```json
+    {
+      "message": "Internal server error"
+    }
     ```
 
 - **GET /api/songs/stream/:id**
@@ -342,6 +370,7 @@ Below are the main API endpoints:
         "id": 1,
         "title": "ChamHoa",
         "artists": ["Mono"],
+        "genres": ["Pop"],
         "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
         "uploaded_at": "2025-05-16T10:00:00.000Z"
       }
@@ -358,6 +387,7 @@ Below are the main API endpoints:
         "id": 1,
         "title": "ChamHoa",
         "artists": ["Mono"],
+        "genres": ["Pop"],
         "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
         "uploaded_at": "2025-05-16T10:00:00.000Z"
       }
@@ -517,6 +547,7 @@ Below are the main API endpoints:
         "id": 1,
         "title": "ChamHoa",
         "artists": ["Mono"],
+        "genres": ["Pop"],
         "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
         "uploaded_at": "2025-05-16T10:00:00.000Z"
       }
@@ -539,6 +570,7 @@ Below are the main API endpoints:
         "id": 1,
         "title": "ChamHoa",
         "artists": ["Mono"],
+        "genres": ["Pop"],
         "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
         "uploaded_at": "2025-05-16T10:00:00.000Z"
       }
@@ -776,7 +808,41 @@ Below are the main API endpoints:
      ]
      ```
 
-7. **Stream a song**:
+7. **Retrieve a song by ID**:
+
+   - Use the `/api/songs/:id` endpoint to fetch a specific song by its ID.
+   - **Request** (Postman or cURL):
+     - **Method**: GET
+     - **URL**: `http://localhost:3000/api/songs/1`
+     - **cURL Example**:
+       ```bash
+       curl -X GET http://localhost:3000/api/songs/1
+       ```
+   - **Expected Response** (HTTP 200):
+     ```json
+     {
+       "id": 1,
+       "title": "ChamHoa",
+       "artists": ["Mono"],
+       "genres": ["Pop"],
+       "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
+       "uploaded_at": "2025-05-16T10:00:00.000Z"
+     }
+     ```
+   - **Error Response** (HTTP 404, song not found):
+     ```json
+     {
+       "message": "Song not found"
+     }
+     ```
+   - **Error Response** (HTTP 500, server error):
+     ```json
+     {
+       "message": "Internal server error"
+     }
+     ```
+
+8. **Stream a song**:
 
    - Use the `/api/songs/stream/:id` endpoint to stream a song.
    - **Request** (Postman or cURL):
@@ -797,7 +863,7 @@ Below are the main API endpoints:
        Content-Range: bytes 0-5242879/5242880
        ```
 
-8. **Search songs by title or artist**:
+9. **Search songs by title or artist**:
 
    - Use the `/api/songs/search?q=<query>` endpoint.
    - **Request** (Postman or cURL):
@@ -821,31 +887,31 @@ Below are the main API endpoints:
      ]
      ```
 
-9. **Search songs by genre**:
+10. **Search songs by genre**:
 
-   - Use the `/api/songs/search-by-genres?genres=<genres>` endpoint.
-   - **Request** (Postman or cURL):
-     - **Method**: GET
-     - **URL**: `http://localhost:3000/api/songs/search-by-genres?genres=Pop`
-     - **cURL Example**:
-       ```bash
-       curl -X GET "http://localhost:3000/api/songs/search-by-genres?genres=Pop"
-       ```
-   - **Expected Response** (HTTP 200):
-     ```json
-     [
-       {
-         "id": 1,
-         "title": "ChamHoa",
-         "artists": ["Mono"],
-         "genres": ["Pop"],
-         "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
-         "uploaded_at": "2025-05-16T10:00:00.000Z"
-       }
-     ]
-     ```
+    - Use the `/api/songs/search-by-genres?genres=<genres>` endpoint.
+    - **Request** (Postman or cURL):
+      - **Method**: GET
+      - **URL**: `http://localhost:3000/api/songs/search-by-genres?genres=Pop`
+      - **cURL Example**:
+        ```bash
+        curl -X GET "http://localhost:3000/api/songs/search-by-genres?genres=Pop"
+        ```
+    - **Expected Response** (HTTP 200):
+      ```json
+      [
+        {
+          "id": 1,
+          "title": "ChamHoa",
+          "artists": ["Mono"],
+          "genres": ["Pop"],
+          "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
+          "uploaded_at": "2025-05-16T10:00:00.000Z"
+        }
+      ]
+      ```
 
-10. **Update song information** (Admin):
+11. **Update song information** (Admin):
 
     - Use the `/api/songs/:id` endpoint.
     - **Request** (Postman or cURL):
@@ -878,7 +944,7 @@ Below are the main API endpoints:
       }
       ```
 
-11. **Delete a song** (Admin):
+12. **Delete a song** (Admin):
 
     - Use the `/api/songs/:id` endpoint.
     - **Request** (Postman or cURL):
@@ -900,7 +966,7 @@ Below are the main API endpoints:
       }
       ```
 
-12. **Create a playlist** (User/Admin):
+13. **Create a playlist** (User/Admin):
 
     - Use the `/api/playlists/` endpoint.
     - **Request** (Postman or cURL):
@@ -932,7 +998,7 @@ Below are the main API endpoints:
       }
       ```
 
-13. **Retrieve all playlists** (User/Admin):
+14. **Retrieve all playlists** (User/Admin):
 
     - Use the `/api/playlists/` endpoint to fetch all playlists the user has access to.
     - **Request** (Postman or cURL):
@@ -963,7 +1029,7 @@ Below are the main API endpoints:
       ]
       ```
 
-14. **Update a playlist name** (User/Admin):
+15. **Update a playlist name** (User/Admin):
 
     - Use the `/api/playlists/:playlistId` endpoint to update the name of a playlist.
     - **Request** (Postman or cURL):
@@ -1012,7 +1078,7 @@ Below are the main API endpoints:
       }
       ```
 
-15. **Search playlists by name** (User/Admin):
+16. **Search playlists by name** (User/Admin):
 
     - Use the `/api/playlists/search?q=<query>` endpoint to search for playlists by name.
     - **Request** (Postman or cURL):
@@ -1050,7 +1116,7 @@ Below are the main API endpoints:
       }
       ```
 
-16. **Retrieve songs in a playlist** (User/Admin):
+17. **Retrieve songs in a playlist** (User/Admin):
 
     - Use the `/api/playlists/:playlistId/songs` endpoint.
     - **Request** (Postman or cURL):
@@ -1072,13 +1138,14 @@ Below are the main API endpoints:
           "id": 1,
           "title": "ChamHoa",
           "artists": ["Mono"],
+          "genres": ["Pop"],
           "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
           "uploaded_at": "2025-05-16T10:00:00.000Z"
         }
       ]
       ```
 
-17. **Search songs in a playlist** (User/Admin):
+18. **Search songs in a playlist** (User/Admin):
 
     - Use the `/api/playlists/:playlistId/songs/search?q=<query>` endpoint to search for songs by title or artist in a specific playlist.
     - **Request** (Postman or cURL):
@@ -1100,6 +1167,7 @@ Below are the main API endpoints:
           "id": 1,
           "title": "ChamHoa",
           "artists": ["Mono"],
+          "genres": ["Pop"],
           "file_path": "/Uploads/1747325319270-ChamHoa.mp3",
           "uploaded_at": "2025-05-16T10:00:00.000Z"
         }
@@ -1124,7 +1192,7 @@ Below are the main API endpoints:
       }
       ```
 
-18. **Add a song to a playlist** (User/Admin):
+19. **Add a song to a playlist** (User/Admin):
 
     - Use the `/api/playlists/songs` endpoint.
     - **Request** (Postman or cURL):
@@ -1156,7 +1224,7 @@ Below are the main API endpoints:
       }
       ```
 
-19. **Remove a song from a playlist** (User/Admin):
+20. **Remove a song from a playlist** (User/Admin):
 
     - Use the `/api/playlists/:playlistId/songs/:songId` endpoint.
     - **Request** (Postman or cURL):
@@ -1178,7 +1246,7 @@ Below are the main API endpoints:
       }
       ```
 
-20. **Delete a playlist** (User/Admin):
+21. **Delete a playlist** (User/Admin):
 
     - Use the `/api/playlists/:playlistId` endpoint.
     - **Request** (Postman or cURL):
@@ -1200,7 +1268,7 @@ Below are the main API endpoints:
       }
       ```
 
-21. **Default admin account**:
+22. **Default admin account**:
     - Log in with:
       ```json
       {

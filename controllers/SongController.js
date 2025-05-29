@@ -23,7 +23,7 @@ export async function addSong(req, res) {
 
   try {
     const filePath = `/uploads/${file.filename}`;
-    console.log("Saving file with path:", filePath); 
+    console.log("Saving file with path:", filePath);
     // Handle genres
     let genresArray = [];
     if (genres) {
@@ -64,18 +64,34 @@ export async function addSong(req, res) {
       genresArray,
       artistsArray
     );
-    console.log("Song created with ID:", songId); 
+    console.log("Song created with ID:", songId);
     res.status(201).json({ message: "Song added successfully", songId });
   } catch (error) {
     console.error("Error adding song:", error);
     // Delete error file
     if (file) {
       const deletePath = path.join(process.cwd(), `/uploads/${file.filename}`);
-      console.log("Deleting file due to error:", deletePath); 
+      console.log("Deleting file due to error:", deletePath);
       fs.unlink(deletePath, (err) => {
         if (err) console.error("Error deleting file:", err);
       });
     }
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+// Get song by ID
+export async function getSongById(req, res) {
+  const { id } = req.params;
+
+  try {
+    const song = await Song.findById(id);
+    if (!song) {
+      return res.status(404).json({ message: "Song not found" });
+    }
+    res.status(200).json(song);
+  } catch (error) {
+    console.error("Error fetching song by ID:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -102,9 +118,9 @@ export async function streamSong(req, res) {
     }
 
     const filePath = path.join(process.cwd(), song.file_path);
-    console.log("Attempting to stream file at:", filePath); 
+    console.log("Attempting to stream file at:", filePath);
     if (!fs.existsSync(filePath)) {
-      console.log("File does not exist at:", filePath); 
+      console.log("File does not exist at:", filePath);
       return res.status(404).json({ message: "File not found" });
     }
 
@@ -112,7 +128,7 @@ export async function streamSong(req, res) {
     const fileSize = stat.size;
     const range = req.headers.range;
 
-    // Setup MIME type 
+    // Setup MIME type
     const mimeType =
       {
         ".mp3": "audio/mpeg",
@@ -201,11 +217,9 @@ export async function updateSong(req, res) {
   const { title, genres, artists } = req.body;
 
   if (!title && !genres && !artists) {
-    return res
-      .status(400)
-      .json({
-        message: "At least one field (title, genres, or artists) is required",
-      });
+    return res.status(400).json({
+      message: "At least one field (title, genres, or artists) is required",
+    });
   }
 
   try {
@@ -338,7 +352,7 @@ export async function deleteSong(req, res) {
     // Delete physical file
     const filePath = path.join(process.cwd(), song.file_path);
     if (fs.existsSync(filePath)) {
-      console.log("Deleting file:", filePath); 
+      console.log("Deleting file:", filePath);
       fs.unlink(filePath, (err) => {
         if (err) console.error("Error deleting file:", err);
       });
