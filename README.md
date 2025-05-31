@@ -326,6 +326,38 @@ Below are the main API endpoints:
     }
     ```
 
+- **GET /api/auth/users/search?name=<query>**
+
+  - Search users by name (requires authentication).
+  - Query Parameters:
+    - `name` (required): Search term for user name.
+  - Header: `Authorization: Bearer <token>`
+  - Response (200):
+    ```json
+    [
+      {
+        "id": 2,
+        "email": "test1@gmail.com",
+        "name": "Dinh Huu Nam",
+        "date_of_birth": "2003-07-20T17:00:00.000Z",
+        "role": "user",
+        "created_at": "2025-05-15T16:00:43.000Z"
+      }
+    ]
+    ```
+  - Response (400):
+    ```json
+    {
+      "message": "Query parameter 'name' is required"
+    }
+    ```
+  - Response (401):
+    ```json
+    {
+      "message": "Invalid or expired token"
+    }
+    ```
+
 ### Songs
 
 - **POST /api/songs/** (Admin)
@@ -817,7 +849,48 @@ Below are the main API endpoints:
      }
      ```
 
-6. **Add a new song** (Admin):
+6. **Search users by name**:
+
+   - Use the `/api/auth/users/search?name=<query>` endpoint to search for users by name.
+   - **Request** (Postman or cURL):
+     - **Method**: GET
+     - **URL**: `http://localhost:3000/api/auth/users/search?name=nam`
+     - **Header**:
+       ```
+       Authorization: Bearer <token>
+       ```
+     - **cURL Example**:
+       ```bash
+       curl -X GET "http://localhost:3000/api/auth/users/search?name=nam" \
+       -H "Authorization: Bearer <token>"
+       ```
+   - **Expected Response** (HTTP 200):
+     ```json
+     [
+       {
+         "id": 2,
+         "email": "test1@gmail.com",
+         "name": "Dinh Huu Nam",
+         "date_of_birth": "2003-07-20T17:00:00.000Z",
+         "role": "user",
+         "created_at": "2025-05-15T16:00:43.000Z"
+       }
+     ]
+     ```
+   - **Error Response** (HTTP 400, missing query):
+     ```json
+     {
+       "message": "Query parameter 'name' is required"
+     }
+     ```
+   - **Error Response** (HTTP 401, invalid token):
+     ```json
+     {
+       "message": "Invalid or expired token"
+     }
+     ```
+
+7. **Add a new song** (Admin):
 
    - Use the `/api/songs/` endpoint to add a song.
    - **Request** (Postman or cURL):
@@ -854,7 +927,7 @@ Below are the main API endpoints:
      ```
      - **Expected Output**: You should see a file (e.g., `1747325319270-ChamHoa.mp3`).
 
-7. **Retrieve all songs**:
+8. **Retrieve all songs**:
 
    - Use the `/api/songs/` endpoint to fetch all songs.
    - **Request** (Postman or cURL):
@@ -878,7 +951,7 @@ Below are the main API endpoints:
      ]
      ```
 
-8. **Retrieve a song by ID**:
+9. **Retrieve a song by ID**:
 
    - Use the `/api/songs/:id` endpoint to fetch a specific song by its ID.
    - **Request** (Postman or cURL):
@@ -912,28 +985,28 @@ Below are the main API endpoints:
      }
      ```
 
-9. **Stream a song**:
+10. **Stream a song**:
 
-   - Use the `/api/songs/stream/:id` endpoint to stream a song.
-   - **Request** (Postman or cURL):
-     - **Method**: GET
-     - **URL**: `http://localhost:3000/api/songs/stream/1`
-     - **Header** (optional, for partial streaming): `Range: bytes=0-`
-     - **cURL Example**:
-       ```bash
-       curl -X GET http://localhost:3000/api/songs/stream/1 -H "Range: bytes=0-"
-       ```
-   - **Expected Response** (HTTP 200 or 206):
-     - Returns audio data (binary stream). Use tools like VLC or a browser to play.
-     - Example headers:
-       ```
-       Content-Type: audio/mpeg
-       Content-Length: 5242880
-       Accept-Ranges: bytes
-       Content-Range: bytes 0-5242879/5242880
-       ```
+    - Use the `/api/songs/stream/:id` endpoint to stream a song.
+    - **Request** (Postman or cURL):
+      - **Method**: GET
+      - **URL**: `http://localhost:3000/api/songs/stream/1`
+      - **Header** (optional, for partial streaming): `Range: bytes=0-`
+      - **cURL Example**:
+        ```bash
+        curl -X GET http://localhost:3000/api/songs/stream/1 -H "Range: bytes=0-"
+        ```
+    - **Expected Response** (HTTP 200 or 206):
+      - Returns audio data (binary stream). Use tools like VLC or a browser to play.
+      - Example headers:
+        ```
+        Content-Type: audio/mpeg
+        Content-Length: 5242880
+        Accept-Ranges: bytes
+        Content-Range: bytes 0-5242879/5242880
+        ```
 
-10. **Search songs by title or artist**:
+11. **Search songs by title or artist**:
 
     - Use the `/api/songs/search?q=<query>` endpoint.
     - **Request** (Postman or cURL):
@@ -957,7 +1030,7 @@ Below are the main API endpoints:
       ]
       ```
 
-11. **Search songs by genre**:
+12. **Search songs by genre**:
 
     - Use the `/api/songs/search-by-genres?genres=<genres>` endpoint.
     - **Request** (Postman or cURL):
@@ -981,7 +1054,7 @@ Below are the main API endpoints:
       ]
       ```
 
-12. **Update song information** (Admin):
+13. **Update song information** (Admin):
 
     - Use the `/api/songs/:id` endpoint.
     - **Request** (Postman or cURL):
@@ -1014,7 +1087,7 @@ Below are the main API endpoints:
       }
       ```
 
-13. **Delete a song** (Admin):
+14. **Delete a song** (Admin):
 
     - Use the `/api/songs/:id` endpoint.
     - **Method**: DELETE
@@ -1035,7 +1108,7 @@ Below are the main API endpoints:
       }
       ```
 
-14. **Create a playlist** (User/Admin):
+15. **Create a playlist** (User/Admin):
 
     - Use the `/api/playlists/` endpoint.
     - **Request** (Postman or cURL):
@@ -1067,7 +1140,7 @@ Below are the main API endpoints:
       }
       ```
 
-15. **Retrieve all playlists** (User/Admin):
+16. **Retrieve all playlists** (User/Admin):
 
     - Use the `/api/playlists/` endpoint to fetch all playlists the user has access to.
     - **Request** (Postman or cURL):
@@ -1098,7 +1171,7 @@ Below are the main API endpoints:
       ]
       ```
 
-16. **Update a playlist name** (User/Admin):
+17. **Update a playlist name** (User/Admin):
 
     - Use the `/api/playlists/:playlistId` endpoint to update the name of a playlist.
     - **Request** (Postman or cURL):
@@ -1147,7 +1220,7 @@ Below are the main API endpoints:
       }
       ```
 
-17. **Search playlists by name** (User/Admin):
+18. **Search playlists by name** (User/Admin):
 
     - Use the `/api/playlists/search?q=<query>` endpoint to search for playlists by name.
     - **Request** (Postman or cURL):
@@ -1185,7 +1258,7 @@ Below are the main API endpoints:
       }
       ```
 
-18. **Retrieve songs in a playlist** (User/Admin):
+19. **Retrieve songs in a playlist** (User/Admin):
 
     - Use the `/api/playlists/:playlistId/songs` endpoint.
     - **Request** (Postman or cURL):
@@ -1214,7 +1287,7 @@ Below are the main API endpoints:
       ]
       ```
 
-19. **Search songs in a playlist** (User/Admin):
+20. **Search songs in a playlist** (User/Admin):
 
     - Use the `/api/playlists/:playlistId/songs/search?q=<query>` endpoint to search for songs by title or artist in a specific playlist.
     - **Request** (Postman or cURL):
@@ -1261,7 +1334,7 @@ Below are the main API endpoints:
       }
       ```
 
-20. **Add a song to a playlist** (User/Admin):
+21. **Add a song to a playlist** (User/Admin):
 
     - Use the `/api/playlists/songs` endpoint.
     - **Request** (Postman or cURL):
@@ -1293,7 +1366,7 @@ Below are the main API endpoints:
       }
       ```
 
-21. **Remove a song from a playlist** (User/Admin):
+22. **Remove a song from a playlist** (User/Admin):
 
     - Use the `/api/playlists/:playlistId/songs/:songId` endpoint.
     - **Request** (Postman or cURL):
@@ -1315,7 +1388,7 @@ Below are the main API endpoints:
       }
       ```
 
-22. **Delete a playlist** (User/Admin):
+23. **Delete a playlist** (User/Admin):
 
     - Use the `/api/playlists/:playlistId` endpoint.
     - **Request** (Postman or cURL):
@@ -1337,7 +1410,7 @@ Below are the main API endpoints:
       }
       ```
 
-23. **Default admin account**:
+24. **Default admin account**:
     - Log in with:
       ```json
       {
