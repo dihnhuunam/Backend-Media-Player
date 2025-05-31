@@ -21,7 +21,7 @@ export class User {
 
   static async findAll() {
     const [rows] = await pool.query(
-      "SELECT id, email, name, date_of_birth, created_at FROM users"
+      "SELECT id, email, name, date_of_birth, role, created_at FROM users"
     );
     return rows;
   }
