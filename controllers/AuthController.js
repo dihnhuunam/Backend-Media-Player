@@ -110,6 +110,28 @@ export async function getUserById(req, res) {
   }
 }
 
+// Search users by name
+export async function searchUsersByName(req, res) {
+  const { name } = req.query;
+
+  if (!name) {
+    return res
+      .status(400)
+      .json({ message: "Name query parameter is required" });
+  }
+
+  try {
+    const users = await User.searchByName(name);
+    if (users.length === 0) {
+      return res.status(404).json({ message: "No users found" });
+    }
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Error searching users:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
 // Update user
 export async function updateUser(req, res) {
   const { id } = req.params;

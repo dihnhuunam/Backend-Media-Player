@@ -26,6 +26,14 @@ export class User {
     return rows;
   }
 
+  static async searchByName(name) {
+    const [rows] = await pool.query(
+      "SELECT id, email, name, date_of_birth, role, created_at FROM users WHERE name LIKE ?",
+      [`%${name}%`]
+    );
+    return rows;
+  }
+
   static async create(email, password, name, dateOfBirth, role = "user") {
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const [result] = await pool.query(
