@@ -7,6 +7,7 @@ import {
   searchSongsByGenres,
   updateSong,
   deleteSong,
+  getSongById,
 } from "../controllers/SongController.js";
 import { authMiddleware } from "../middleware/AuthMiddleware.js";
 import { adminMiddleware } from "../middleware/AdminMiddleware.js";
@@ -38,6 +39,10 @@ const upload = multer({
 
 const router = express.Router();
 
+// Specific routes should come before dynamic routes
+router.get("/search", searchSongs);
+router.get("/search-by-genres", searchSongsByGenres);
+router.get("/:id", getSongById); // Moved after specific routes
 router.post(
   "/",
   authMiddleware,
@@ -47,8 +52,6 @@ router.post(
 );
 router.get("/", getSongs);
 router.get("/stream/:id", streamSong);
-router.get("/search", searchSongs);
-router.get("/search-by-genres", searchSongsByGenres);
 router.put("/:id", authMiddleware, adminMiddleware, updateSong);
 router.delete("/:id", authMiddleware, adminMiddleware, deleteSong);
 

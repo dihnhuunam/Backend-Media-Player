@@ -80,6 +80,22 @@ export async function addSong(req, res) {
   }
 }
 
+// Get song by ID
+export async function getSongById(req, res) {
+  const { id } = req.params;
+
+  try {
+    const song = await Song.findById(id);
+    if (!song) {
+      return res.status(404).json({ message: "Song not found" });
+    }
+    res.status(200).json(song);
+  } catch (error) {
+    console.error("Error fetching song by ID:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
 // Get all songs
 export async function getSongs(req, res) {
   try {
