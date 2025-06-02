@@ -2,7 +2,6 @@ import express from "express";
 import {
   addSong,
   getSongs,
-  getSongById,
   streamSong,
   searchSongs,
   searchSongsByGenres,
@@ -39,7 +38,6 @@ const upload = multer({
 
 const router = express.Router();
 
-router.get("/:id", getSongById);
 router.post(
   "/",
   authMiddleware,
