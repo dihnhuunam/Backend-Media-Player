@@ -10,7 +10,7 @@ dotenv.config();
 
 const app = express();
 
-// Create folder 'uploads/' if not existed
+// Create folder "uploads"
 const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);

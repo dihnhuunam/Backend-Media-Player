@@ -39,10 +39,9 @@ const upload = multer({
 
 const router = express.Router();
 
-// Specific routes should come before dynamic routes
 router.get("/search", searchSongs);
 router.get("/search-by-genres", searchSongsByGenres);
-router.get("/:id", getSongById); // Moved after specific routes
+router.get("/:id", getSongById);
 router.post(
   "/",
   authMiddleware,
