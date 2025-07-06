@@ -78,6 +78,17 @@ export async function addSongToPlaylist(req, res) {
     res.status(200).json({ message: "Song added to playlist successfully" });
   } catch (error) {
     console.error("Error adding song to playlist:", error);
+    if (error.message === "Playlist not found") {
+      return res.status(404).json({ message: "Playlist not found" });
+    }
+    if (error.message === "Song not found") {
+      return res.status(404).json({ message: "Song not found" });
+    }
+    if (error.message === "Song already exists in playlist") {
+      return res
+        .status(409)
+        .json({ message: "Song already exists in playlist" });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -99,6 +110,9 @@ export async function getPlaylistSongs(req, res) {
     res.status(200).json(songs);
   } catch (error) {
     console.error("Error fetching playlist songs:", error);
+    if (error.message === "Playlist not found") {
+      return res.status(404).json({ message: "Playlist not found" });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -137,6 +151,9 @@ export async function searchSongsInPlaylist(req, res) {
     res.status(200).json(songs);
   } catch (error) {
     console.error("Error searching songs in playlist:", error);
+    if (error.message === "Playlist not found") {
+      return res.status(404).json({ message: "Playlist not found" });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -194,12 +211,11 @@ export async function removeSongFromPlaylist(req, res) {
         .json({ message: "Unauthorized: Playlist does not belong to user" });
     }
 
-    const [result] = await pool.query(
-      "DELETE FROM playlist_songs WHERE playlist_id = ? AND song_id = ?",
-      [playlistId, songId]
+    const affectedRows = await PlaylistSong.removeSongFromPlaylist(
+      playlistId,
+      songId
     );
-
-    if (result.affectedRows === 0) {
+    if (affectedRows === 0) {
       return res.status(404).json({ message: "Song not found in playlist" });
     }
 
@@ -208,6 +224,15 @@ export async function removeSongFromPlaylist(req, res) {
       .json({ message: "Song removed from playlist successfully" });
   } catch (error) {
     console.error("Error removing song from playlist:", error);
+    if (error.message === "Playlist not found") {
+      return res.status(404).json({ message: "Playlist not found" });
+    }
+    if (error.message === "Song not found") {
+      return res.status(404).json({ message: "Song not found" });
+    }
+    if (error.message === "Song not found in playlist") {
+      return res.status(404).json({ message: "Song not found in playlist" });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }

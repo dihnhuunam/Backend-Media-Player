@@ -1,9 +1,49 @@
 import pool from "../configs/Database.js";
 
 export class PlaylistSong {
+  // Check if song exists in playlist
+  static async isSongInPlaylist(playlistId, songId) {
+    const [rows] = await pool.query(
+      "SELECT 1 FROM playlist_songs WHERE playlist_id = ? AND song_id = ?",
+      [playlistId, songId]
+    );
+    return rows.length > 0;
+  }
+
+  // Check if song exists
+  static async songExists(songId) {
+    const [rows] = await pool.query("SELECT 1 FROM songs WHERE id = ?", [
+      songId,
+    ]);
+    return rows.length > 0;
+  }
+
+  // Check if playlist exists
+  static async playlistExists(playlistId) {
+    const [rows] = await pool.query("SELECT 1 FROM playlists WHERE id = ?", [
+      playlistId,
+    ]);
+    return rows.length > 0;
+  }
+
   // Add to playlist
   static async addSongToPlaylist(playlistId, songId) {
     try {
+      // Check if playlist exists
+      if (!(await this.playlistExists(playlistId))) {
+        throw new Error("Playlist not found");
+      }
+
+      // Check if song exists
+      if (!(await this.songExists(songId))) {
+        throw new Error("Song not found");
+      }
+
+      // Check if song is already in playlist
+      if (await this.isSongInPlaylist(playlistId, songId)) {
+        throw new Error("Song already exists in playlist");
+      }
+
       const [result] = await pool.query(
         "INSERT INTO playlist_songs (playlist_id, song_id) VALUES (?, ?)",
         [playlistId, songId]
@@ -18,6 +58,21 @@ export class PlaylistSong {
   // Remove from playlist
   static async removeSongFromPlaylist(playlistId, songId) {
     try {
+      // Check if playlist exists
+      if (!(await this.playlistExists(playlistId))) {
+        throw new Error("Playlist not found");
+      }
+
+      // Check if song exists
+      if (!(await this.songExists(songId))) {
+        throw new Error("Song not found");
+      }
+
+      // Check if song is in playlist
+      if (!(await this.isSongInPlaylist(playlistId, songId))) {
+        throw new Error("Song not found in playlist");
+      }
+
       const [result] = await pool.query(
         "DELETE FROM playlist_songs WHERE playlist_id = ? AND song_id = ?",
         [playlistId, songId]
@@ -32,6 +87,11 @@ export class PlaylistSong {
   // Get all songs in playlist
   static async findSongsByPlaylistId(playlistId) {
     try {
+      // Check if playlist exists
+      if (!(await this.playlistExists(playlistId))) {
+        throw new Error("Playlist not found");
+      }
+
       const [rows] = await pool.query(
         `
         SELECT 
@@ -78,6 +138,11 @@ export class PlaylistSong {
     offset = 0
   ) {
     try {
+      // Check if playlist exists
+      if (!(await this.playlistExists(playlistId))) {
+        throw new Error("Playlist not found");
+      }
+
       const [rows] = await pool.query(
         `
         SELECT 

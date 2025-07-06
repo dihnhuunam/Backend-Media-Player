@@ -5,6 +5,19 @@ import { User } from "../models/User.js";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
+// Validate date of birth (must be at least 13 years old)
+const validateDateOfBirth = (dateOfBirth) => {
+  if (!moment(dateOfBirth, moment.ISO_8601, true).isValid()) {
+    throw new Error("Invalid dateOfBirth format");
+  }
+  const dob = moment(dateOfBirth);
+  const age = moment().diff(dob, "years");
+  if (age < 13) {
+    throw new Error("User must be at least 13 years old");
+  }
+  return dob.format("YYYY-MM-DD");
+};
+
 // Register
 export async function register(req, res) {
   const { email, password, name, dateOfBirth } = req.body;
@@ -16,16 +29,18 @@ export async function register(req, res) {
   }
 
   try {
-    // Check if email already existed
-    const existingUser = await User.findByEmail(email);
-    if (existingUser) {
-      return res.status(400).json({ message: "Email already exists" });
+    // Check if email already exists
+    try {
+      await User.findByEmail(email);
+      return res.status(409).json({ message: "Email already exists" });
+    } catch (error) {
+      if (error.message !== "User not found") {
+        throw error;
+      }
     }
 
-    // Format date
-    const formattedDate = moment(dateOfBirth, moment.ISO_8601, true).isValid()
-      ? moment(dateOfBirth).format("YYYY-MM-DD")
-      : dateOfBirth;
+    // Validate date of birth
+    const formattedDate = validateDateOfBirth(dateOfBirth);
 
     // Create new user
     await User.create(email, password, name, formattedDate);
@@ -33,6 +48,18 @@ export async function register(req, res) {
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
     console.error("Error registering user:", error);
+    if (
+      error.message === "Invalid email format" ||
+      error.message === "Password must be at least 4 characters long" ||
+      error.message ===
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number" ||
+      error.message === "Name must be a non-empty string" ||
+      error.message === "Invalid dateOfBirth format" ||
+      error.message === "User must be at least 13 years old" ||
+      error.message === "Invalid role"
+    ) {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -48,9 +75,6 @@ export async function login(req, res) {
   try {
     // Find user
     const user = await User.findByEmail(email);
-    if (!user) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
 
     // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
@@ -79,6 +103,12 @@ export async function login(req, res) {
     });
   } catch (error) {
     console.error("Error logging in:", error);
+    if (
+      error.message === "User not found" ||
+      error.message === "Invalid email format"
+    ) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -86,6 +116,11 @@ export async function login(req, res) {
 // Get all users
 export async function getUsers(req, res) {
   try {
+    if (req.user.role !== "admin") {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized: Admin access required" });
+    }
     const users = await User.findAll();
     res.status(200).json(users);
   } catch (error) {
@@ -100,12 +135,12 @@ export async function getUserById(req, res) {
 
   try {
     const user = await User.findById(id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
     res.status(200).json(user);
   } catch (error) {
     console.error("Error fetching user:", error);
+    if (error.message === "User not found") {
+      return res.status(404).json({ message: "User not found" });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -122,12 +157,15 @@ export async function searchUsersByName(req, res) {
 
   try {
     const users = await User.searchByName(name);
-    if (users.length === 0) {
-      return res.status(404).json({ message: "No users found" });
-    }
     res.status(200).json(users);
   } catch (error) {
     console.error("Error searching users:", error);
+    if (error.message === "No users found") {
+      return res.status(404).json({ message: "No users found" });
+    }
+    if (error.message === "Search name must be a non-empty string") {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -156,22 +194,14 @@ export async function updateUser(req, res) {
   try {
     // Find user
     const user = await User.findById(id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
 
     // Prepare update fields
     const updates = {};
     if (name) updates.name = name;
     if (dateOfBirth) {
-      // Chuẩn hóa định dạng ngày
-      if (moment(dateOfBirth, moment.ISO_8601, true).isValid()) {
-        updates.date_of_birth = moment(dateOfBirth).format("YYYY-MM-DD");
-      } else {
-        return res.status(400).json({ message: "Invalid dateOfBirth format" });
-      }
+      updates.date_of_birth = validateDateOfBirth(dateOfBirth);
     }
-    if (password) updates.password = await bcrypt.hash(password, 10);
+    if (password) updates.password = password;
 
     // Update user in database
     await User.update(id, updates);
@@ -189,6 +219,19 @@ export async function updateUser(req, res) {
     });
   } catch (error) {
     console.error("Error updating user:", error);
+    if (
+      error.message === "User not found" ||
+      error.message === "No fields to update" ||
+      error.message === "User not found or no changes made" ||
+      error.message === "Name must be a non-empty string" ||
+      error.message === "Invalid dateOfBirth format" ||
+      error.message === "User must be at least 13 years old" ||
+      error.message === "Password must be at least 8 characters long" ||
+      error.message ===
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+    ) {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -200,8 +243,12 @@ export async function deleteUser(req, res) {
   try {
     // Find user
     const user = await User.findById(id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+
+    // Prevent admin from deleting their own account
+    if (req.user.id === parseInt(id) && req.user.role === "admin") {
+      return res
+        .status(403)
+        .json({ message: "Cannot delete your own admin account" });
     }
 
     // Delete user
@@ -210,6 +257,12 @@ export async function deleteUser(req, res) {
     res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
     console.error("Error deleting user:", error);
+    if (error.message === "User not found") {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (error.message === "Cannot delete your own admin account") {
+      return res.status(403).json({ message: error.message });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }

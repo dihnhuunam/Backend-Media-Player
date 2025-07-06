@@ -1,10 +1,41 @@
 import pool from "../configs/Database.js";
 
 export class Song {
+  // Check if song title exists
+  static async isTitleExists(title, excludeId = null) {
+    const query = excludeId
+      ? "SELECT 1 FROM songs WHERE title = ? AND id != ?"
+      : "SELECT 1 FROM songs WHERE title = ?";
+    const params = excludeId ? [title, excludeId] : [title];
+    const [rows] = await pool.query(query, params);
+    return rows.length > 0;
+  }
+
+  // Validate genre and artist names
+  static validateName(name) {
+    if (!name || typeof name !== "string" || name.trim() === "") {
+      throw new Error("Name must be a non-empty string");
+    }
+    // Allow alphanumeric, spaces, and common punctuation
+    const validNamePattern = /^[a-zA-Z0-9\s\-',.]+$/;
+    if (!validNamePattern.test(name)) {
+      throw new Error("Name contains invalid characters");
+    }
+  }
+
   static async create(title, filePath, genres, artists) {
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
+
+      // Check for duplicate title
+      if (await this.isTitleExists(title)) {
+        throw new Error("Song title already exists");
+      }
+
+      // Validate title
+      this.validateName(title);
+
       // Insert song
       const [result] = await connection.query(
         "INSERT INTO songs (title, file_path) VALUES (?, ?)",
@@ -15,7 +46,11 @@ export class Song {
       // Insert genres if provided
       if (genres && genres.length > 0) {
         const uniqueGenres = [...new Set(genres)];
+        if (uniqueGenres.length === 0) {
+          throw new Error("At least one valid genre is required");
+        }
         for (const genreName of uniqueGenres) {
+          this.validateName(genreName);
           // Insert or get genre ID
           let [genreResult] = await connection.query(
             "INSERT INTO genres (name) VALUES (?) ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)",
@@ -40,7 +75,11 @@ export class Song {
       // Insert artists if provided
       if (artists && artists.length > 0) {
         const uniqueArtists = [...new Set(artists)];
+        if (uniqueArtists.length === 0) {
+          throw new Error("At least one valid artist is required");
+        }
         for (const artistName of uniqueArtists) {
+          this.validateName(artistName);
           // Insert or get artist ID
           let [artistResult] = await connection.query(
             "INSERT INTO artists (name) VALUES (?) ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)",
@@ -107,7 +146,9 @@ export class Song {
     `,
       [id]
     );
-    if (rows.length === 0) return null;
+    if (rows.length === 0) {
+      throw new Error("Song not found");
+    }
     return {
       ...rows[0],
       genres: rows[0].genres ? [...new Set(rows[0].genres.split(","))] : [],
@@ -116,6 +157,9 @@ export class Song {
   }
 
   static async search(query) {
+    if (!query || typeof query !== "string" || query.trim() === "") {
+      throw new Error("Search query must be a non-empty string");
+    }
     const searchTerm = `%${query}%`;
     const [rows] = await pool.query(
       `
@@ -132,6 +176,9 @@ export class Song {
     `,
       [searchTerm, searchTerm]
     );
+    if (rows.length === 0) {
+      throw new Error("No songs found");
+    }
     return rows.map((row) => ({
       ...row,
       genres: row.genres ? [...new Set(row.genres.split(","))] : [],
@@ -140,9 +187,18 @@ export class Song {
   }
 
   static async searchByGenres(genres) {
+    if (!genres || (Array.isArray(genres) && genres.length === 0)) {
+      throw new Error("At least one genre is required");
+    }
     const genreArray = Array.isArray(genres)
       ? genres
       : genres.split(",").map((g) => g.trim());
+    if (genreArray.length === 0) {
+      throw new Error("At least one valid genre is required");
+    }
+    for (const genre of genreArray) {
+      this.validateName(genre);
+    }
     const placeholders = genreArray.map(() => "?").join(",");
     const [rows] = await pool.query(
       `
@@ -161,6 +217,9 @@ export class Song {
     `,
       genreArray
     );
+    if (rows.length === 0) {
+      throw new Error("No songs found for the given genres");
+    }
     return rows.map((row) => ({
       ...row,
       genres: row.genres ? [...new Set(row.genres.split(","))] : [],

@@ -12,18 +12,34 @@ export async function addSong(req, res) {
     return res.status(400).json({ message: "Title and file are required" });
   }
 
+  // Check file size (limit to 100MB)
+  const maxFileSize = 100 * 1024 * 1024; // 100MB
+  if (file.size > maxFileSize) {
+    fs.unlink(path.join(process.cwd(), `/uploads/${file.filename}`), (err) => {
+      if (err) console.error("Error deleting file:", err);
+    });
+    return res.status(400).json({ message: "File size exceeds 100MB limit" });
+  }
+
   // Check file's format
   const allowedExtensions = [".mp3", ".wav", ".m4a"];
   const fileExtension = path.extname(file.originalname).toLowerCase();
   if (!allowedExtensions.includes(fileExtension)) {
+    fs.unlink(path.join(process.cwd(), `/uploads/${file.filename}`), (err) => {
+      if (err) console.error("Error deleting file:", err);
+    });
     return res
       .status(400)
       .json({ message: "Only mp3, wav, and m4a files are allowed" });
   }
 
   try {
+    // Check if file is accessible
     const filePath = `/uploads/${file.filename}`;
-    console.log("Saving file with path:", filePath);
+    if (!fs.existsSync(path.join(process.cwd(), filePath))) {
+      throw new Error("Uploaded file is not accessible");
+    }
+
     // Handle genres
     let genresArray = [];
     if (genres) {
@@ -64,17 +80,25 @@ export async function addSong(req, res) {
       genresArray,
       artistsArray
     );
-    console.log("Song created with ID:", songId);
     res.status(201).json({ message: "Song added successfully", songId });
   } catch (error) {
     console.error("Error adding song:", error);
     // Delete error file
     if (file) {
       const deletePath = path.join(process.cwd(), `/uploads/${file.filename}`);
-      console.log("Deleting file due to error:", deletePath);
       fs.unlink(deletePath, (err) => {
         if (err) console.error("Error deleting file:", err);
       });
+    }
+    if (
+      error.message === "Song title already exists" ||
+      error.message === "Name must be a non-empty string" ||
+      error.message === "Name contains invalid characters" ||
+      error.message === "At least one valid genre is required" ||
+      error.message === "At least one valid artist is required" ||
+      error.message === "Uploaded file is not accessible"
+    ) {
+      return res.status(400).json({ message: error.message });
     }
     res.status(500).json({ message: "Internal server error" });
   }
@@ -86,12 +110,12 @@ export async function getSongById(req, res) {
 
   try {
     const song = await Song.findById(id);
-    if (!song) {
-      return res.status(404).json({ message: "Song not found" });
-    }
     res.status(200).json(song);
   } catch (error) {
     console.error("Error fetching song by ID:", error);
+    if (error.message === "Song not found") {
+      return res.status(404).json({ message: "Song not found" });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -113,15 +137,9 @@ export async function streamSong(req, res) {
 
   try {
     const song = await Song.findById(id);
-    if (!song) {
-      return res.status(404).json({ message: "Song not found" });
-    }
-
     const filePath = path.join(process.cwd(), song.file_path);
-    console.log("Attempting to stream file at:", filePath);
     if (!fs.existsSync(filePath)) {
-      console.log("File does not exist at:", filePath);
-      return res.status(404).json({ message: "File not found" });
+      throw new Error("File not found or inaccessible");
     }
 
     const stat = fs.statSync(filePath);
@@ -173,6 +191,12 @@ export async function streamSong(req, res) {
     }
   } catch (error) {
     console.error("Error streaming song:", error);
+    if (
+      error.message === "Song not found" ||
+      error.message === "File not found or inaccessible"
+    ) {
+      return res.status(404).json({ message: error.message });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -190,6 +214,12 @@ export async function searchSongs(req, res) {
     res.status(200).json(songs);
   } catch (error) {
     console.error("Error searching songs:", error);
+    if (error.message === "No songs found") {
+      return res.status(404).json({ message: "No songs found" });
+    }
+    if (error.message === "Search query must be a non-empty string") {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -207,6 +237,13 @@ export async function searchSongsByGenres(req, res) {
     res.status(200).json(songs);
   } catch (error) {
     console.error("Error searching songs by genres:", error);
+    if (
+      error.message === "No songs found for the given genres" ||
+      error.message === "At least one valid genre is required" ||
+      error.message === "Name contains invalid characters"
+    ) {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -224,8 +261,10 @@ export async function updateSong(req, res) {
 
   try {
     const song = await Song.findById(id);
-    if (!song) {
-      return res.status(404).json({ message: "Song not found" });
+
+    // Check for duplicate title (if provided)
+    if (title && (await Song.isTitleExists(title, id))) {
+      return res.status(409).json({ message: "Song title already exists" });
     }
 
     const connection = await pool.getConnection();
@@ -252,6 +291,14 @@ export async function updateSong(req, res) {
           }
         } else if (Array.isArray(genres)) {
           genresArray = genres;
+        }
+
+        // Validate genres
+        if (genresArray.length === 0) {
+          throw new Error("At least one valid genre is required");
+        }
+        for (const genre of genresArray) {
+          Song.validateName(genre);
         }
 
         // Delete existing genres
@@ -295,6 +342,14 @@ export async function updateSong(req, res) {
           artistsArray = artists;
         }
 
+        // Validate artists
+        if (artistsArray.length === 0) {
+          throw new Error("At least one valid artist is required");
+        }
+        for (const artist of artistsArray) {
+          Song.validateName(artist);
+        }
+
         // Delete existing artists
         await connection.query("DELETE FROM song_artists WHERE song_id = ?", [
           id,
@@ -332,6 +387,15 @@ export async function updateSong(req, res) {
     }
   } catch (error) {
     console.error("Error updating song:", error);
+    if (
+      error.message === "Song not found" ||
+      error.message === "Song title already exists" ||
+      error.message === "At least one valid genre is required" ||
+      error.message === "At least one valid artist is required" ||
+      error.message === "Name contains invalid characters"
+    ) {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -342,9 +406,6 @@ export async function deleteSong(req, res) {
 
   try {
     const song = await Song.findById(id);
-    if (!song) {
-      return res.status(404).json({ message: "Song not found" });
-    }
 
     // Delete song (cascades to song_genres, song_artists, playlist_songs)
     await pool.query("DELETE FROM songs WHERE id = ?", [id]);
@@ -352,7 +413,6 @@ export async function deleteSong(req, res) {
     // Delete physical file
     const filePath = path.join(process.cwd(), song.file_path);
     if (fs.existsSync(filePath)) {
-      console.log("Deleting file:", filePath);
       fs.unlink(filePath, (err) => {
         if (err) console.error("Error deleting file:", err);
       });
@@ -361,6 +421,9 @@ export async function deleteSong(req, res) {
     res.status(200).json({ message: "Song deleted successfully" });
   } catch (error) {
     console.error("Error deleting song:", error);
+    if (error.message === "Song not found") {
+      return res.status(404).json({ message: "Song not found" });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }
